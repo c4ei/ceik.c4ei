@@ -1,0 +1,74 @@
+<!-- signup.ejs -->
+
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="AAH - All About Healthy Network" />
+    <meta name="author" content="c4ei.net">
+    <link rel="apple-touch-icon" href="/favicon.ico" />
+    <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico" />
+    <title>회원가입</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        body {
+            background-color: #f8f9fa;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .card {
+            width: 400px;
+        }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <div class="card-body">
+            <h5 class="card-title text-center">회원가입</h5>
+            <form name="form_signup" id="form_signup" method="POST">
+                <div class="form-group">
+                    <label for="email">EMAIL:</label>
+                    <input type="text" class="form-control" id="email" name="email" maxlength="50" required>
+                </div>
+                <div class="form-group">
+                    <label for="password">비밀번호:</label>
+                    <input type="password" class="form-control" id="password" name="password"  maxlength="50" required>
+                </div>
+                <button type="button" onclick="jsfn_submit();" class="btn btn-primary btn-block">회원가입</button>
+            </form>
+            <script>
+                function jsfn_submit(){
+                    let _form_signup = document.getElementById("form_signup");
+                    let _email = document.getElementById("email");
+                    let _password = document.getElementById("password");
+                    if(_email.value.length<10){
+                        alert('email 을 입력하세요.');
+                        _email.focus();
+                        return;
+                    }
+                    if(!validateEmail(_email.value)){
+                        alert('email 형식을 확인 하세요');
+                        _email.focus();
+                        return;
+                    }
+                    if(_password.value.length<8){
+                        alert('비밀번호를 8자이상 입력하세요.');
+                        _password.focus();
+                        return;
+                    }
+                    _form_signup.action="/signup";
+                    _form_signup.submit();
+                }
+                function validateEmail(email) {
+                    var re = /\S+@\S+\.\S+/;
+                    return re.test(email);
+                }
+            </script>
+        </div>
+    </div>
+</body>
+</html>
