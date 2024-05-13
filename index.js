@@ -79,6 +79,86 @@ const key = process.env.AES_KEY; // key (32 바이트)
 const iv = process.env.AES_IV; // Initialization Vector (16 바이트)
 
 
+const tokenABI = JSON.parse('[{"constant":true,"inputs":[],"name":"name","outputs":[{"name":"","type":"string"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":false,"inputs":[{"name":"spender","type":"address"},{"name":"value","type":"uint256"}],"name":"approve","outputs":[{"name":"","type":"bool"}],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":true,"inputs":[],"name":"totalSupply","outputs":[{"name":"","type":"uint256"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":false,"inputs":[{"name":"sender","type":"address"},{"name":"recipient","type":"address"},{"name":"amount","type":"uint256"}],"name":"transferFrom","outputs":[{"name":"","type":"bool"}],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":true,"inputs":[],"name":"decimals","outputs":[{"name":"","type":"uint8"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":false,"inputs":[{"name":"spender","type":"address"},{"name":"addedValue","type":"uint256"}],"name":"increaseAllowance","outputs":[{"name":"","type":"bool"}],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":true,"inputs":[{"name":"account","type":"address"}],"name":"balanceOf","outputs":[{"name":"","type":"uint256"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":true,"inputs":[],"name":"symbol","outputs":[{"name":"","type":"string"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":false,"inputs":[{"name":"spender","type":"address"},{"name":"subtractedValue","type":"uint256"}],"name":"decreaseAllowance","outputs":[{"name":"","type":"bool"}],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":false,"inputs":[{"name":"recipient","type":"address"},{"name":"amount","type":"uint256"}],"name":"transfer","outputs":[{"name":"","type":"bool"}],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":true,"inputs":[{"name":"owner","type":"address"},{"name":"spender","type":"address"}],"name":"allowance","outputs":[{"name":"","type":"uint256"}],"payable":false,"stateMutability":"view","type":"function"},{"inputs":[{"name":"name","type":"string"},{"name":"symbol","type":"string"},{"name":"decimals","type":"uint8"}],"payable":false,"stateMutability":"nonpayable","type":"constructor"},{"anonymous":false,"inputs":[{"indexed":true,"name":"from","type":"address"},{"indexed":true,"name":"to","type":"address"},{"indexed":false,"name":"value","type":"uint256"}],"name":"Transfer","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"name":"owner","type":"address"},{"indexed":true,"name":"spender","type":"address"},{"indexed":false,"name":"value","type":"uint256"}],"name":"Approval","type":"event"}]'); 
+const Tx = require('ethereumjs-tx').Transaction;
+// ERC-20 토큰 계약 주소
+const tokenAddress = '0x18814b01b5cc76f7043e10fd268cc4364df47da0';
+// 개인 키
+const privateKey = Buffer.from(process.env.AAH_BANK_PRVKEY, 'hex');
+// ERC-20 토큰 계약 인스턴스 생성
+const tokenContract = new web3.eth.Contract(tokenABI, tokenAddress);
+
+async function fn_sendMining(send_addr, rcv_addr, rcv_amt, fromId, user_ip){
+    let tr_msg = "";
+    let sqls1 = "update users set reqAAH_ingYN='Y' WHERE userIdx ='"+fromId+"'";
+    saveDB(sqls1);
+
+    // 토큰 전송 함수 호출
+    console.log(rcv_amt +" : rcv_amt");
+    const rcv_amt_numeric = parseFloat(rcv_amt); // 문자열을 숫자로 변환
+    let _rcv_amt = 0;
+    if (!isNaN(rcv_amt_numeric)) {
+        _rcv_amt = rcv_amt_numeric.toFixed(8); // 소수점 이하 8자리로 반올림
+        console.log(_rcv_amt);
+    } else {
+        console.error("rcv_amt is not a valid number");
+    }
+    // const sendceikValueWei = web3.utils.toWei(_rcv_amt.toString(), 'ether');
+    // // 트랜잭션 데이터 생성
+    // const txData = tokenContract.methods.transfer(rcv_addr, sendceikValueWei).encodeABI();
+
+    const sendceikValue = web3.utils.toWei(_rcv_amt.toString(), 'ether') / Math.pow(10, 8); // 에궁 CEIK 는 8자리다 ㅠㅠ
+    const txData = tokenContract.methods.transfer(rcv_addr, sendceikValue).encodeABI();
+    // const senderPrivateKey = Buffer.from(process.env.AAH_BANK_PRVKEY, 'hex');
+
+    // Klaytn 지갑을 사용하여 트랜잭션 서명을 위한 계정 생성
+    const senderAccount = web3.eth.accounts.privateKeyToAccount(process.env.AAH_BANK_PRVKEY);
+    
+    // 계정 주소 확인
+    const senderAddress = senderAccount.address;
+    
+    // 트랜잭션 생성
+    const rawTx = {
+        from: senderAddress,
+        to: tokenContract.options.address,
+        gas: 200000, // 가스 한도
+        data: txData
+    };
+    
+    // 트랜잭션 서명
+    web3.eth.accounts.signTransaction(rawTx, process.env.AAH_BANK_PRVKEY)
+        .then((signedTx) => {
+            // 서명된 트랜잭션 전송
+            web3.eth.sendSignedTransaction(signedTx.rawTransaction)
+                // .on('transactionHash', (hash) => {
+                //     console.log('트랜잭션 해시:', hash);
+                // })
+                .once('receipt', (receipt) => {
+                    console.log('트랜잭션 영수증:', receipt);
+                    // 트랜잭션이 성공적으로 처리되었으므로 후속 작업 수행
+                    fn_send_tx_log(fromId, send_addr, rcv_addr, sendceikValue, receipt.blockNumber, receipt.contractAddress, receipt.blockHash, receipt.transactionHash,"CEIK_MINING",user_ip);
+                    web3.eth.getBalance(rcv_addr, function(error, result) {
+                        let wallet_balance = web3.utils.fromWei(result, "ether") +" CEIK";
+                        let _hash = receipt.transactionHash;
+                        tr_msg = tr_msg + rcv_addr +" : rcv_addr / " + sendceikValue +" : rcv_amt / "+ wallet_balance +" : wallet_balance / "+ _hash +" : _hash";
+                        let sqls2 = "update users set reqAAH_ingYN='N', aah_balance='0', last_reg=now() WHERE userIdx ='"+fromId+"'";
+                        saveDB(sqls2);
+                        return tr_msg;
+                    });
+                })
+                // .on('error', (error) => {
+                //     console.error('트랜잭션 전송 중 오류 발생:', error);
+                // });
+        })
+        .catch((error) => {
+            console.error('트랜잭션 서명 중 오류 발생:', error);
+        });
+
+    //////////
+    return tr_msg;
+}
+
+
 app.set('view engine', 'ejs');
 app.set('views', __dirname + '/views');
 
@@ -556,7 +636,7 @@ app.post('/sendAAH', async (req, res) => {
         _user_add_addr = result[0].user_add_addr;
     }
 
-    let sql0 = "SELECT count(userIdx) AS cnt FROM sendlog WHERE userIdx ='"+chk_userIdx+"' and memo='AAH_MINING' and regdate > DATE_ADD(now(), INTERVAL -7 HOUR)";
+    let sql0 = "SELECT count(userIdx) AS cnt FROM sendlog WHERE userIdx ='"+chk_userIdx+"' and memo='CEIK_MINING' and regdate > DATE_ADD(now(), INTERVAL -7 HOUR)";
     let result0 = await loadDB(sql0);
     let mining_Cnt = result0[0].cnt;
     // console.log(mining_Cnt+":mining_Cnt");
@@ -724,49 +804,30 @@ async function fn_setPontLogByEmail(email, point, memo, user_ip){
 /////////////////// air drop //////////////////////
 
 async function getBalanceAah(aah_addr){
-    var wallet_balance = await web3.eth.getBalance(aah_addr, async function(error, result) {
-        // console.log(wallet_balance+":wallet_balance - getBalanceAah");
-    });
-    wallet_balance = await web3.utils.fromWei(await wallet_balance, "ether");
-    // console.log(await wallet_balance + " : wallet_balance - 602 ");
-    return await wallet_balance;
-}
+    const tokenContract = new web3.eth.Contract(tokenABI, tokenAddress);
 
-async function fn_sendMining(send_addr, rcv_addr, rcv_amt, fromId, user_ip){
-    let tr_msg = "";
-    let sqls1 = "update users set reqAAH_ingYN='Y' WHERE userIdx ='"+fromId+"'";
-    saveDB(sqls1);
+    let wallet_balance = await tokenContract.methods.balanceOf(aah_addr).call();
+    console.log('토큰 잔액:', wallet_balance);
 
-    if (await fn_unlockAccount(send_addr))
-    {
-        try{
-            // var user_ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress || req.socket.remoteAddress || req.connection.socket.remoteAddress;
-            web3.eth.sendTransaction({
-                from: send_addr,
-                to: rcv_addr,
-                value: web3.utils.toWei(rcv_amt,'ether'),
-                gas: 300000
-            }).
-            once('sent', function(payload){ console.log(getCurTimestamp()+' ###  mining sent ###'+fromId+' / '+rcv_addr+' / '+rcv_amt); })
-            .then(function(receipt){
-                fn_send_tx_log(fromId, send_addr, rcv_addr, rcv_amt, receipt.blockNumber, receipt.contractAddress, receipt.blockHash, receipt.transactionHash,"AAH_MINING",user_ip);
-                web3.eth.getBalance(rcv_addr, function(error, result) {
-                    let wallet_balance = web3.utils.fromWei(result, "ether") +" AAH";
-                    // i18n.__('mining_lang_send_mining_ok_aah') // "#### AAH_MINING 발송 ####\n"+ rcv_addr +" 로\n"+rcv_amt+" AAH가 발송되었습니다.\n내 잔고 : "+ wallet_balance+"\ntransactionHash : "+receipt.transactionHash
-                    let _hash = receipt.transactionHash;
-                    tr_msg = tr_msg + rcv_addr +" : rcv_addr / " + rcv_amt +" : rcv_amt / "+ wallet_balance +" : wallet_balance / "+ _hash +" : _hash";
-                    // fn_sendMessage(ctx, chatId, i18n.__('mining_lang_send_mining_ok_aah',{rcv_addr ,rcv_amt ,wallet_balance ,_hash ,_hash }) , 'html');
-                    let sqls2 = "update users set reqAAH_ingYN='N', aah_balance='0', last_reg=now() WHERE userIdx ='"+fromId+"'";
-                    saveDB(sqls2);
-                });
-            });
-        }catch(e){
-            // i18n.__('mining_lang_send_mining_failure_aah') //#### AAH_MINING 발송 ####\n채굴중 문제가 발생 하였습니다.
-            tr_msg = tr_msg + "" + i18n.__('mining_lang_send_mining_failure_aah');
-            console.log("755 : "+e);
-        }
-    }
-    return tr_msg;
+    // 토큰의 decimals 확인 (예: 18)
+    const tokenDecimals = 18;
+
+    // 토큰 잔액을 이더로 변환
+    wallet_balance = parseFloat(wallet_balance) / Math.pow(10, tokenDecimals);
+
+    // CEIK의 소수점 이동 (CEIK의 decimals가 8인 경우)
+    const ceikDecimals = 8;
+    wallet_balance = parseFloat(wallet_balance) * Math.pow(10, ceikDecimals);
+
+    console.log("wallet_balance (CEIK): " + wallet_balance);
+    return wallet_balance;
+    
+    // var wallet_balance = await web3.eth.getBalance(aah_addr, async function(error, result) {
+    //     // console.log(wallet_balance+":wallet_balance - getBalanceAah");
+    // });
+    // wallet_balance = await web3.utils.fromWei(await wallet_balance, "ether");
+    // // console.log(await wallet_balance + " : wallet_balance - 602 ");
+    // return await wallet_balance;
 }
 
 async function fn_unlockAccount(addr){

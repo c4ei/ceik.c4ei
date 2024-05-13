@@ -89,7 +89,7 @@
         <div id="lyNoShow" style="display: none;">
             <p>내 Email 주소 : <%=email%></p>
             <p>내 CEIK 주소 : <br /> <span id="aah_address">
-                <a href ="https://exp.c4ex.net/address/<%=aah_address%>" target="_blank"><%=aah_address%></a></span></p>
+                <a href ="https://klaytnscope.com/account/<%=aah_address%>?tabId=tokenBalance" target="_blank"><%=aah_address%></a></span></p>
             <p>내 지갑 CEIK 예치수량 : <span id="aah_real_balance"><%=aah_real_balance%></span> 
                 <%      if (aah_real_balance>1000){ %> <font color="red">Hash+ 250</font> <% } 
                  else if (aah_real_balance>500) { %> <font color="red">Hash+ 150</font> <% }
@@ -103,7 +103,7 @@
             ><a href="/add_address">전송용 지갑주소 추가</a></button>
             <% if(user_add_addr!=null){ %>
             <p>추가 CEIK 주소 : <br /> <span id="user_add_addr">
-                <a href ="https://exp.c4ex.net/address/<%=user_add_addr%>" target="_blank"><%=user_add_addr%></a></span><br /> 
+                <a href ="https://klaytnscope.com/account/<%=user_add_addr%>?tabId=tokenBalance" target="_blank"><%=user_add_addr%></a></span><br /> 
                 ※추가 CEIK 주소 존재 시 해당 주소로 전송 됩니다.<br />
                 ※If an additional CEIK address exists, it will be sent to that address.
             </p>

@@ -24,7 +24,7 @@
 	"mining_lang_next_ing_poss_aah": "The next mining is possible after {{nTime}}.",
 	"mining_lang_next_poss_aah": "Mining is possible every 8 hours.",
 	"mining_lang_send_mining_ok_aah": "#### AAH Mining Success ####\n adddress : {{rcv_addr}} \n AMT : {{rcv_amt}} AAH has been sent.\nmy balance : {{wallet_balance}} \ntransactionHash : <a href='https://exp.c4ex.net/tx/{{_hash}}' target='_blank'>{{_hash}}</a>",
-	"mining_lang_send_mining_failure_aah": "#### AAH_MINING transmission failed ####\nA problem occurred during mining.",
+	"mining_lang_send_mining_failure_aah": "#### CEIK_MINING transmission failed ####\nA problem occurred during mining.",
 	"mining_lang_send_user_ok_aah": "#### AAH Send Success ####\n adddress : {{rcv_addr}} \n AMT : {{rcv_amt}} AAH has been sent.\nmy balance : {{wallet_balance}} \ntransactionHash : <a href='https://exp.c4ex.net/tx/{{_hash}}' target='_blank'>{{_hash}}</a>",
 	"mining_lang_do": "Mining AAH",
 	"settings_command_menu_sett": "settings_command_menu_sett"
