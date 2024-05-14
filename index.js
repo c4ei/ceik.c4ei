@@ -70,7 +70,7 @@ async function saveDB(strSQL){
 }
 
 const _sendAmt = "0.0001";
-const _regMiningQty = "0.0000001000000";
+const _regMiningQty = "0.00000010";
 const Web3 = require("web3");
 const web3 = new Web3(new Web3.providers.HttpProvider(process.env.AAH_RPC));
 
@@ -92,69 +92,74 @@ async function fn_sendMining(send_addr, rcv_addr, rcv_amt, fromId, user_ip){
     let tr_msg = "";
     let sqls1 = "update users set reqAAH_ingYN='Y' WHERE userIdx ='"+fromId+"'";
     saveDB(sqls1);
+    try
+    {
+        // 토큰 전송 함수 호출
+        // console.log(rcv_amt +" : rcv_amt");
+        const rcv_amt_numeric = parseFloat(rcv_amt); // 문자열을 숫자로 변환
+        let _rcv_amt = 0;
+        if (!isNaN(rcv_amt_numeric)) {
+            _rcv_amt = rcv_amt_numeric.toFixed(8); // 소수점 이하 8자리로 반올림
+            // console.log(_rcv_amt);
+        } else {
+            console.error("rcv_amt is not a valid number");
+        }
+        // const sendceikValueWei = web3.utils.toWei(_rcv_amt.toString(), 'ether');
+        // const txData = tokenContract.methods.transfer(rcv_addr, sendceikValueWei).encodeABI();
 
-    // 토큰 전송 함수 호출
-    console.log(rcv_amt +" : rcv_amt");
-    const rcv_amt_numeric = parseFloat(rcv_amt); // 문자열을 숫자로 변환
-    let _rcv_amt = 0;
-    if (!isNaN(rcv_amt_numeric)) {
-        _rcv_amt = rcv_amt_numeric.toFixed(8); // 소수점 이하 8자리로 반올림
-        console.log(_rcv_amt);
-    } else {
-        console.error("rcv_amt is not a valid number");
-    }
-    // const sendceikValueWei = web3.utils.toWei(_rcv_amt.toString(), 'ether');
-    // // 트랜잭션 데이터 생성
-    // const txData = tokenContract.methods.transfer(rcv_addr, sendceikValueWei).encodeABI();
+        const sendceikValue = web3.utils.toWei(_rcv_amt.toString(), 'ether') / Math.pow(10, 10); // 에궁 CEIK 는 8자리다 ㅠㅠ 18-10 = 8
+        // console.log(sendceikValue +" : sendceikValue");
+        const txData = tokenContract.methods.transfer(rcv_addr, sendceikValue).encodeABI(); // 트랜잭션 데이터 생성
 
-    const sendceikValue = web3.utils.toWei(_rcv_amt.toString(), 'ether') / Math.pow(10, 8); // 에궁 CEIK 는 8자리다 ㅠㅠ
-    const txData = tokenContract.methods.transfer(rcv_addr, sendceikValue).encodeABI();
-    // const senderPrivateKey = Buffer.from(process.env.AAH_BANK_PRVKEY, 'hex');
-
-    // Klaytn 지갑을 사용하여 트랜잭션 서명을 위한 계정 생성
-    const senderAccount = web3.eth.accounts.privateKeyToAccount(process.env.AAH_BANK_PRVKEY);
-    
-    // 계정 주소 확인
-    const senderAddress = senderAccount.address;
-    
-    // 트랜잭션 생성
-    const rawTx = {
-        from: senderAddress,
-        to: tokenContract.options.address,
-        gas: 200000, // 가스 한도
-        data: txData
-    };
-    
-    // 트랜잭션 서명
-    web3.eth.accounts.signTransaction(rawTx, process.env.AAH_BANK_PRVKEY)
-        .then((signedTx) => {
-            // 서명된 트랜잭션 전송
-            web3.eth.sendSignedTransaction(signedTx.rawTransaction)
-                // .on('transactionHash', (hash) => {
-                //     console.log('트랜잭션 해시:', hash);
-                // })
-                .once('receipt', (receipt) => {
-                    console.log('트랜잭션 영수증:', receipt);
-                    // 트랜잭션이 성공적으로 처리되었으므로 후속 작업 수행
-                    fn_send_tx_log(fromId, send_addr, rcv_addr, sendceikValue, receipt.blockNumber, receipt.contractAddress, receipt.blockHash, receipt.transactionHash,"CEIK_MINING",user_ip);
-                    web3.eth.getBalance(rcv_addr, function(error, result) {
-                        let wallet_balance = web3.utils.fromWei(result, "ether") +" CEIK";
-                        let _hash = receipt.transactionHash;
-                        tr_msg = tr_msg + rcv_addr +" : rcv_addr / " + sendceikValue +" : rcv_amt / "+ wallet_balance +" : wallet_balance / "+ _hash +" : _hash";
-                        let sqls2 = "update users set reqAAH_ingYN='N', aah_balance='0', last_reg=now() WHERE userIdx ='"+fromId+"'";
-                        saveDB(sqls2);
-                        return tr_msg;
+        // Klaytn 지갑을 사용하여 트랜잭션 서명을 위한 계정 생성
+        const senderAccount = web3.eth.accounts.privateKeyToAccount(process.env.AAH_BANK_PRVKEY);
+        
+        // 계정 주소 확인
+        const senderAddress = senderAccount.address;
+        
+        // 트랜잭션 생성
+        const rawTx = {
+            from: senderAddress,
+            to: tokenContract.options.address,
+            gas: 200000, // 가스 한도
+            data: txData
+        };
+        
+        // 트랜잭션 서명
+        web3.eth.accounts.signTransaction(rawTx, process.env.AAH_BANK_PRVKEY)
+            .then((signedTx) => {
+                // 서명된 트랜잭션 전송
+                web3.eth.sendSignedTransaction(signedTx.rawTransaction)
+                    // .on('transactionHash', (hash) => {
+                    //     console.log('트랜잭션 해시:', hash);
+                    // })
+                    .once('receipt', (receipt) => {
+                        // console.log('트랜잭션 영수증:', receipt);
+                        // 트랜잭션이 성공적으로 처리되었으므로 후속 작업 수행
+                        fn_send_tx_log(fromId, send_addr, rcv_addr, sendceikValue, receipt.blockNumber, receipt.contractAddress, receipt.blockHash, receipt.transactionHash,"CEIK_MINING",user_ip);
+                        web3.eth.getBalance(rcv_addr, function(error, result) {
+                            let wallet_balance = web3.utils.fromWei(result, "ether") +" CEIK";
+                            let _hash = receipt.transactionHash;
+                            tr_msg = tr_msg + rcv_addr +" : rcv_addr / " + sendceikValue +" : rcv_amt / "+ wallet_balance +" : wallet_balance / "+ _hash +" : _hash";
+                            let sqls2 = "update users set reqAAH_ingYN='N', aah_balance='0', last_reg=now() WHERE userIdx ='"+fromId+"'";
+                            saveDB(sqls2);
+                            // return tr_msg;
+                        });
+                    })
+                    .on('error', (error) => {
+                        console.error('트랜잭션 전송 중 오류 발생:', error);
                     });
-                })
-                // .on('error', (error) => {
-                //     console.error('트랜잭션 전송 중 오류 발생:', error);
-                // });
-        })
-        .catch((error) => {
-            console.error('트랜잭션 서명 중 오류 발생:', error);
-        });
-
+            })
+            .catch((error) => {
+                console.error('트랜잭션 서명 중 오류 발생:', error);
+            });
+    }catch(e){
+        // i18n.__('mining_lang_send_mining_failure_aah') //#### AAH_MINING 발송 ####\n채굴중 문제가 발생 하였습니다.
+        tr_msg = tr_msg +" ["+ e +"] " + i18n.__('mining_lang_send_mining_failure_aah');
+        // console.log("158 : "+e);
+    }
     //////////
+    // console.log("161 tr_msg : "+tr_msg);
     return tr_msg;
 }
 
@@ -394,7 +399,7 @@ app.post('/joinok', async (req, res) => {
         let _memo1 = "추천인 존재로 가입";
         await fn_setPontLog(_userIdx, 200, _memo1, user_ip);
         //추천인 보상
-        let sql1 = "update users set last_reg=now(), point=point+100, reffer_cnt=reffer_cnt+1 , aah_balance = CAST(aah_balance AS DECIMAL(35,13)) + CAST('"+_regMiningQty+"' AS DECIMAL(35,13)) where userIdx = '"+fid+"' ";
+        let sql1 = "update users set last_reg=now(), point=point+100, reffer_cnt=reffer_cnt+1 , aah_balance = CAST(aah_balance AS DECIMAL(22,8)) + CAST('"+_regMiningQty+"' AS DECIMAL(22,8)) where userIdx = '"+fid+"' ";
         try{ await saveDB(sql1); } catch(e){ console.log("추천인 보상 " + sql1); }
         let _memo2 = email +" 의 추천인 가입 ";
         await fn_setPontLog(fid,100,_memo2,user_ip);
@@ -592,7 +597,7 @@ app.post('/accumulate', async (req, res) => {
     if(_ing_sec>86400){_ing_sec = 86400;}
 
     if(_cnt==0||_ing_sec>7200){
-        let sql2 = "UPDATE users set aah_balance = CAST(aah_balance AS DECIMAL(35,13)) + CAST('"+MiningQty+"' AS DECIMAL(35,13)), last_reg=now(), last_ip='"+user_ip+"' WHERE userIdx = '"+userIdx+"'";
+        let sql2 = "UPDATE users set aah_balance = CAST(aah_balance AS DECIMAL(22,8)) + CAST('"+MiningQty+"' AS DECIMAL(22,8)), last_reg=now(), last_ip='"+user_ip+"' WHERE userIdx = '"+userIdx+"'";
         try{
             await saveDB(sql2);
             console.log('적립된 포인트: %s / %s / %s', MiningQty , userIdx , email);
@@ -647,18 +652,21 @@ app.post('/sendAAH', async (req, res) => {
             }else{
                 err_msg = err_msg + fn_sendMining(process.env.AAH_BANK_ADDRESS, _user_add_addr, _aah_balance, chk_userIdx, user_ip);
             }
-            let _errAlert = "<script>alert('"+_aah_balance+"' AAH 전송이 완료되었습니다.);document.location.href='/mining';</script>";
+            let _errAlert = "<script>alert('"+_aah_balance+" CEIK 전송이 완료되었습니다.');document.location.href='/mining';</script>";
             res.send(_errAlert);
+            // console.log(_errAlert);
             return;
         }else{
             let _errAlert = "<script>alert('이미 처리중입니다. (It is already being processed.)');document.location.href='/mining';</script>";
             res.send(_errAlert);
+            // console.log(_errAlert);
             return;
         }
         // res.sendStatus(200);
     }else{
         let _errAlert = "<script>alert('전송은 8시간 마다 가능 합니다. (Transmission is possible every 8 hours.)');document.location.href='/mining';</script>";
         res.send(_errAlert);
+        // console.log(_errAlert);
         return;
     }
     // console.log(err_msg);
@@ -807,7 +815,7 @@ async function getBalanceAah(aah_addr){
     const tokenContract = new web3.eth.Contract(tokenABI, tokenAddress);
 
     let wallet_balance = await tokenContract.methods.balanceOf(aah_addr).call();
-    console.log('토큰 잔액:', wallet_balance);
+    // console.log('토큰 잔액:', wallet_balance);
 
     // 토큰의 decimals 확인 (예: 18)
     const tokenDecimals = 18;
@@ -819,7 +827,7 @@ async function getBalanceAah(aah_addr){
     const ceikDecimals = 8;
     wallet_balance = parseFloat(wallet_balance) * Math.pow(10, ceikDecimals);
 
-    console.log("wallet_balance (CEIK): " + wallet_balance);
+    // console.log("wallet_balance (CEIK): " + wallet_balance);
     return wallet_balance;
     
     // var wallet_balance = await web3.eth.getBalance(aah_addr, async function(error, result) {
