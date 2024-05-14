@@ -1,5 +1,5 @@
 {
-  "name": "ref.c4ei.net",
+  "name": "ceik.c4ei.net",
   "version": "1.0.0",
   "scripts": {
     "start": "node index.js"
@@ -19,6 +19,6 @@
     "shortid": "^2.2.16",
     "web3": "^1.7.3"
   },
-  "author": "ref.c4ei.net",
+  "author": "ceik.c4ei.net",
   "license": "ISC"
 }
