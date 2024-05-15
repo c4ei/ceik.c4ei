@@ -237,7 +237,7 @@ app.post('/login', async (req, res) => {
     }
     // email = jsfnRepSQLinj(email);
     // password = jsfnRepSQLinj(password);
-    let sql = "SELECT *, DATE_FORMAT(loginDailydate, '%y%m%d') AS loginDailyYYYYMMDD, DATE_FORMAT(now(), '%y%m%d') AS curYYYYMMDD FROM users WHERE email = '"+email+"'";
+    let sql = "SELECT *, DATE_FORMAT(loginDailydate, '%y%m%d') AS loginDailyYYYYMMDD, DATE_FORMAT(now(), '%y%m%d') AS curYYYYMMDD , IFNULL(user_add_addr, '') as user_new_addr FROM users WHERE email = '"+email+"'";
     let result = await loadDB(sql);
     // console.log(result[0].length +" : result[0].length");
     if(result.length>0){
@@ -254,7 +254,11 @@ app.post('/login', async (req, res) => {
         res.render('error', { err_msg:err_msg});
         return;
     }
-    let _aah_real_balance = await getBalanceCEIK(result[0].pub_key);
+    let search_addr = result[0].pub_key; 
+    if(result[0].user_new_addr.length>20){
+        search_addr=result[0].user_new_addr;
+    }
+    let _aah_real_balance = await getBalanceCEIK(search_addr);
     req.session.email = email;
     req.session.userIdx = result[0].userIdx;
     let _loginDailyYYYYMMDD =  result[0].loginDailyYYYYMMDD;
@@ -699,6 +703,16 @@ app.post('/add_addrok', async (req, res) => {
         res.redirect('/login');
         return;
     }
+
+    let sql = "SELECT count(user_add_addr) as uCnt FROM users WHERE user_add_addr='"+user_add_addr+"'";
+    let result = await loadDB(sql);
+    _uCnt = result[0].uCnt;
+    if(_uCnt>0){
+        let _errAlert = "<script>alert('다른 계정에 이미 등록된 주소 입니다.');document.location.href='/add_address';</script>";
+        res.send(_errAlert);
+        return;
+    }
+
     let _user_add_addr = jsfnRepSQLinj(user_add_addr);
     _user_add_addr = await web3.utils.toChecksumAddress(_user_add_addr);
     // const email = req.session.email;
