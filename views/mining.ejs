@@ -73,6 +73,31 @@
             font-size: 48px;
             color: #333;
         }
+        .info {
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            cursor: pointer;
+            position: relative;
+            display: inline-block;
+        }
+        .tooltip {
+            display: none;
+            position: absolute;
+            left: 100%;
+            top: 0;
+            margin-left: 10px;
+            padding: 10px;
+            background-color: #333;
+            color: #fff;
+            border-radius: 5px;
+            text-align: left;
+            width: 200px;
+            z-index: 10;
+        }
+        .info:hover .tooltip {
+            display: block;
+        }
     </style>
 </head>
 <body>
@@ -90,14 +115,26 @@
             <p>내 Email 주소 : <%=email%></p>
             <p>내 CEIK 주소 : <br /> <span id="aah_address">
                 <a href ="https://klaytnscope.com/account/<%=aah_address%>?tabId=tokenBalance" target="_blank"><%=aah_address%></a></span></p>
-            <p>내 지갑 CEIK 예치수량 : <span id="aah_real_balance"><%=aah_real_balance%></span> 
-                <%      if (aah_real_balance>10000000000){ %> <font color="red">Hash+ 250</font> <% } 
-                   else if (aah_real_balance>5000000000) { %> <font color="red">Hash+ 150</font> <% }
-                   else if (aah_real_balance>2000000000) { %> <font color="red">Hash+ 50</font> <% } 
-                   else if (aah_real_balance>1000000000) { %> <font color="red">Hash+ 20</font> <% } 
-                   else if (aah_real_balance>500000000)  { %> <font color="red">Hash+ 5</font> <% } 
-                   else if (aah_real_balance>100000000)  { %> <font color="red">Hash+ 2</font> <% } 
-                   else if (aah_real_balance>0)   { %> <font color="red">Hash+ 1</font> <% } %>
+            <p>
+                <div class="info">
+                    내 지갑 CEIK 예치수량 : <span id="aah_real_balance"><%=aah_real_balance%></span> 
+                    <%      if (aah_real_balance>10000000000){ %> <font color="red">Hash+ 250</font> <% } 
+                       else if (aah_real_balance>5000000000) { %> <font color="red">Hash+ 150</font> <% }
+                       else if (aah_real_balance>2000000000) { %> <font color="red">Hash+ 50</font> <% } 
+                       else if (aah_real_balance>1000000000) { %> <font color="red">Hash+ 20</font> <% } 
+                       else if (aah_real_balance>500000000)  { %> <font color="red">Hash+ 5</font> <% } 
+                       else if (aah_real_balance>100000000)  { %> <font color="red">Hash+ 2</font> <% } 
+                       else if (aah_real_balance>0)   { %> <font color="red">Hash+ 1</font> <% } %>
+                    <div class="tooltip" style="font-size: 11px;">
+                        CEIK 예치 100억 초과  Hash파워+250<br>
+                        CEIK 예치 50억 초과   Hash파워+150<br>
+                        CEIK 예치 20억 초과   Hash파워+50<br>
+                        CEIK 예치 10억 초과   Hash파워+20<br>
+                        CEIK 예치 5억 초과    Hash파워+5<br>
+                        CEIK 예치 1억 초과    Hash파워+2<br>
+                        CEIK 예치 0 초과      Hash파워+1<br>
+                    </div>
+                </div>
             </p>
             <button id="addAddrButton" style="width: 250px;height: 30px;padding: 2px 2px 2px 2px;background-color: chartreuse;color: #ff0000;"
             ><a href="/add_address">전송용 지갑주소 추가</a></button>
