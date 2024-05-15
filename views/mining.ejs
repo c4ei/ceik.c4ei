@@ -91,13 +91,13 @@
             <p>내 CEIK 주소 : <br /> <span id="aah_address">
                 <a href ="https://klaytnscope.com/account/<%=aah_address%>?tabId=tokenBalance" target="_blank"><%=aah_address%></a></span></p>
             <p>내 지갑 CEIK 예치수량 : <span id="aah_real_balance"><%=aah_real_balance%></span> 
-                <%      if (aah_real_balance>1000){ %> <font color="red">Hash+ 250</font> <% } 
-                 else if (aah_real_balance>500) { %> <font color="red">Hash+ 150</font> <% }
-                 else if (aah_real_balance>200) { %> <font color="red">Hash+ 50</font> <% } 
-                 else if (aah_real_balance>100) { %> <font color="red">Hash+ 20</font> <% } 
-                 else if (aah_real_balance>50)  { %> <font color="red">Hash+ 5</font> <% } 
-                 else if (aah_real_balance>10)  { %> <font color="red">Hash+ 2</font> <% } 
-                 else if (aah_real_balance>0)   { %> <font color="red">Hash+ 1</font> <% } %>
+                <%      if (aah_real_balance>10000000000){ %> <font color="red">Hash+ 250</font> <% } 
+                   else if (aah_real_balance>5000000000) { %> <font color="red">Hash+ 150</font> <% }
+                   else if (aah_real_balance>2000000000) { %> <font color="red">Hash+ 50</font> <% } 
+                   else if (aah_real_balance>1000000000) { %> <font color="red">Hash+ 20</font> <% } 
+                   else if (aah_real_balance>500000000)  { %> <font color="red">Hash+ 5</font> <% } 
+                   else if (aah_real_balance>100000000)  { %> <font color="red">Hash+ 2</font> <% } 
+                   else if (aah_real_balance>0)   { %> <font color="red">Hash+ 1</font> <% } %>
             </p>
             <button id="addAddrButton" style="width: 250px;height: 30px;padding: 2px 2px 2px 2px;background-color: chartreuse;color: #ff0000;"
             ><a href="/add_address">전송용 지갑주소 추가</a></button>
@@ -109,13 +109,15 @@
             </p>
             <% } %>
 
-<!-- CEIK 예치수량 1000 초과 Hash파워 증가 250
-CEIK 예치수량 500  초과 Hash파워 증가 150
-CEIK 예치수량 200  초과 Hash파워 증가  50
-CEIK 예치수량 100  초과 Hash파워 증가  20
-CEIK 예치수량 50   초과 Hash파워 증가   5
-CEIK 예치수량 10   초과 Hash파워 증가   2
-CEIK 예치수량 0    초과 Hash파워 증가   1 -->
+<!-- 
+    CEIK 예치수량 10000000000 초과 Hash파워 증가 250
+    CEIK 예치수량 5000000000  초과 Hash파워 증가 150
+    CEIK 예치수량 2000000000  초과 Hash파워 증가  50
+    CEIK 예치수량 1000000000  초과 Hash파워 증가  20
+    CEIK 예치수량 500000000   초과 Hash파워 증가   5
+    CEIK 예치수량 100000000   초과 Hash파워 증가   2
+    CEIK 예치수량 0           초과 Hash파워 증가   1 
+-->
         </div>
         
         <h1 id="MiningQty">0.0000000001</h1> 

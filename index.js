@@ -254,7 +254,7 @@ app.post('/login', async (req, res) => {
         res.render('error', { err_msg:err_msg});
         return;
     }
-    let _aah_real_balance = await getBalanceAah(result[0].pub_key);
+    let _aah_real_balance = await getBalanceCEIK(result[0].pub_key);
     req.session.email = email;
     req.session.userIdx = result[0].userIdx;
     let _loginDailyYYYYMMDD =  result[0].loginDailyYYYYMMDD;
@@ -810,32 +810,34 @@ async function fn_setPontLogByEmail(email, point, memo, user_ip){
 }
 
 /////////////////// air drop //////////////////////
-
-async function getBalanceAah(aah_addr){
+/*
+async function getBalanceCEIK(aah_addr){
     const tokenContract = new web3.eth.Contract(tokenABI, tokenAddress);
-
     let wallet_balance = await tokenContract.methods.balanceOf(aah_addr).call();
-    // console.log('토큰 잔액:', wallet_balance);
-
-    // 토큰의 decimals 확인 (예: 18)
-    const tokenDecimals = 18;
-
+    const tokenDecimals = 18; // 토큰의 decimals 확인 (예: 18)
     // 토큰 잔액을 이더로 변환
     wallet_balance = parseFloat(wallet_balance) / Math.pow(10, tokenDecimals);
-
-    // CEIK의 소수점 이동 (CEIK의 decimals가 8인 경우)
-    const ceikDecimals = 8;
+    const ceikDecimals = 8 + 2; // CEIK 는 DECIMAL 8자리 인데 값이 안맞아 +2 넣어 줌
     wallet_balance = parseFloat(wallet_balance) * Math.pow(10, ceikDecimals);
-
-    // console.log("wallet_balance (CEIK): " + wallet_balance);
     return wallet_balance;
-    
-    // var wallet_balance = await web3.eth.getBalance(aah_addr, async function(error, result) {
-    //     // console.log(wallet_balance+":wallet_balance - getBalanceAah");
-    // });
-    // wallet_balance = await web3.utils.fromWei(await wallet_balance, "ether");
-    // // console.log(await wallet_balance + " : wallet_balance - 602 ");
-    // return await wallet_balance;
+}
+*/
+async function getBalanceCEIK(aah_addr) {
+    try {
+        // CEIK 토큰 계약 인스턴스 생성
+        const tokenContract = new web3.eth.Contract(tokenABI, tokenAddress);
+        // CEIK 토큰 잔액 가져오기
+        let wallet_balance = await tokenContract.methods.balanceOf(aah_addr).call();
+        // CEIK 토큰의 decimals (예: 8)
+        const tokenDecimals = 8;
+        // 잔액을 소수점으로 변환
+        wallet_balance = BigInt(wallet_balance);
+        const final_balance = parseFloat(wallet_balance) / Math.pow(10, tokenDecimals);
+        return final_balance;
+    } catch (error) {
+        console.error("Error fetching balance:", error);
+        throw new Error("Failed to fetch balance");
+    }
 }
 
 async function fn_unlockAccount(addr){
