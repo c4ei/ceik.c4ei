@@ -7,6 +7,12 @@ const dotenv = require('dotenv');
 const cors = require("cors");
 const i18n = require('./i18n.js.config');
 // i18n.__('settings_command_menu_sett')
+const bodyParser = require('body-parser');
+const webpush = require('web-push');
+const cron = require('node-cron');
+const jwt = require('jsonwebtoken');
+const cookieParser = require('cookie-parser');
+
 const app = express();
 
 dotenv.config();
@@ -22,7 +28,14 @@ app.use(session({
 }));
 var path = require('path');
 const STATIC_PATH = path.join(__dirname, './public')
-// app.use(bodyParser.json());
+// 정적 파일을 제공하는 미들웨어 등록
+app.use(express.static('public'));
+
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: true }));
+app.use(cookieParser());
+
+const secretKey = process.env.COOKIE_SECRETKEY;
 
 // MySQL 데이터베이스 연결 설정
 const mysql = require("mysql2/promise");
@@ -68,6 +81,7 @@ async function saveDB(strSQL){
       connection.release();
   }
 }
+
 
 const _sendAmt = "0.0001";
 const _regMiningQty = "0.00000010";
@@ -217,8 +231,13 @@ app.get('/', async (req, res) => {
             _party_mem_cnt = result6[0].party_mem_cnt;
         }
 
+        let sql6 = "SELECT COUNT(userIdx) subsc_cnt FROM subscriptions WHERE userIdx = '"+_userIdx+"'" ;
+        let result6 = await loadDB(sql6);
+        let _subsc_cnt = result6[0].subsc_cnt;
+
         res.render('mining', { email:_email , userIdx:_userIdx ,aah_balance:_aah_balance, party_mem_cnt:_party_mem_cnt, reffer_id:_reffer_id 
-            , reffer_cnt:_reffer_cnt, aah_address : _pub_key , aah_real_balance:_aah_real_balance, ing_sec:_ing_sec, user_add_addr:_user_add_addr});
+            , reffer_cnt:_reffer_cnt, aah_address : _pub_key , aah_real_balance:_aah_real_balance, ing_sec:_ing_sec, user_add_addr:_user_add_addr
+            , VAPID_PUBLIC:publicVapidKey , subsc_cnt:_subsc_cnt});
     }
 });
 
@@ -226,6 +245,86 @@ app.get('/login', (req, res) => {
     res.render('login');
 });
 
+app.post('/login', async (req, res) => {
+    let err_msg = "";
+    const { email, password, rememberMe } = req.body;
+
+    if (!email || !password) {
+        err_msg = "EMAIL과 비밀번호를 모두 입력해주세요.";
+        res.render('error', { err_msg });
+        return;
+    }
+
+    let sql = `SELECT *, DATE_FORMAT(loginDailydate, '%y%m%d') AS loginDailyYYYYMMDD, 
+               DATE_FORMAT(now(), '%y%m%d') AS curYYYYMMDD, 
+               IFNULL(user_add_addr, '') as user_new_addr 
+               FROM users WHERE email = ?`;
+    let result = await loadDB(mysql.format(sql, [email]));
+
+    if (result.length > 0) {
+        if (!(await bcrypt.compare(password, result[0].password))) {
+            err_msg = "EMAIL 또는 비밀번호가 올바르지 않습니다.";
+            res.render('error', { err_msg });
+            return;
+        }
+    } else {
+        err_msg = "회원가입을 먼저 하세요.";
+        res.render('error', { err_msg });
+        return;
+    }
+
+    let search_addr = result[0].pub_key;
+    if (result[0].user_new_addr.length > 20) {
+        search_addr = result[0].user_new_addr;
+    }
+
+    let _aah_real_balance = await getBalanceCEIK(search_addr);
+    req.session.email = email;
+    req.session.userIdx = result[0].userIdx;
+    let _loginDailyYYYYMMDD = result[0].loginDailyYYYYMMDD;
+    let _curYYYYMMDD = result[0].curYYYYMMDD;
+
+    let sql2 = "";
+    if (_loginDailyYYYYMMDD == _curYYYYMMDD) {
+        sql2 = `UPDATE users SET aah_real_balance='${_aah_real_balance}', 
+                loginCnt=loginCnt+1, logindate=now(), reqAAH_ingYN='N' 
+                WHERE userIdx='${result[0].userIdx}'`;
+    } else {
+        sql2 = `UPDATE users SET aah_real_balance='${_aah_real_balance}', 
+                loginCnt=loginCnt+1, loginDailyCnt=loginDailyCnt+1, 
+                logindate=now(), loginDailydate=now() 
+                WHERE userIdx='${result[0].userIdx}'`;
+    }
+
+    try {
+        await saveDB(sql2);
+    } catch (e) {
+        console.error(e);
+    }
+
+    if (rememberMe) {
+        const token = jwt.sign({ userIdx: result[0].userIdx, email: result[0].email }, secretKey, { expiresIn: '7d' });
+        res.cookie('authToken', token, { httpOnly: true, maxAge: 7 * 24 * 60 * 60 * 1000 });  // 7일
+    }
+
+    res.redirect('/');
+});
+
+// 미들웨어: 자동 로그인 처리
+app.use(async (req, res, next) => {
+    if (!req.session.userIdx && req.cookies.authToken) {
+        try {
+            const decoded = jwt.verify(req.cookies.authToken, secretKey);
+            req.session.userIdx = decoded.userIdx;
+            req.session.email = decoded.email;
+        } catch (error) {
+            console.error('Invalid token', error);
+        }
+    }
+    next();
+});
+
+/*
 app.post('/login', async (req, res) => {
     let err_msg= "";
     const { email, password } = req.body;
@@ -274,6 +373,7 @@ app.post('/login', async (req, res) => {
     // console.log(sql2);
     res.redirect('/');
 });
+*/
 
 app.get('/signup', (req, res) => {
     res.render('signup');
@@ -724,6 +824,99 @@ app.post('/add_addrok', async (req, res) => {
 
     res.redirect('/');
 });
+
+
+// ######################### web push start #########################
+// VAPID 키 설정
+const publicVapidKey = process.env.VAPID_PUBLIC;
+const privateVapidKey = process.env.VAPID_PRIVATE;
+
+webpush.setVapidDetails('mailto:c4ei.net@gmail.com', publicVapidKey, privateVapidKey);
+
+app.post('/subscribe', async (req, res) => {
+    const { userIdx, subscription } = req.body;
+    const { endpoint, keys } = subscription;
+    const strSQL = `
+        INSERT INTO subscriptions (userIdx, endpoint, keys_p256dh, keys_auth)
+        VALUES (?, ?, ?, ?)
+        ON DUPLICATE KEY UPDATE endpoint=VALUES(endpoint), keys_p256dh=VALUES(keys_p256dh), keys_auth=VALUES(keys_auth)
+    `;
+
+    try {
+        await saveDB(mysql.format(strSQL, [userIdx, endpoint, keys.p256dh, keys.auth]));
+        res.status(201).json({ message: 'Subscription saved' });
+    } catch (error) {
+        console.error('Error saving subscription:', error);
+        res.status(500).json({ error: 'Database error' });
+    }
+});
+
+app.delete('/unsubscribe', async (req, res) => {
+    const { endpoint } = req.body;
+    const strSQL = `DELETE FROM subscriptions WHERE endpoint = ?`;
+
+    try {
+        await saveDB(mysql.format(strSQL, [endpoint]));
+        res.status(200).json({ message: 'Subscription deleted' });
+    } catch (error) {
+        console.error('Error deleting subscription:', error);
+        res.status(500).json({ error: 'Database error' });
+    }
+});
+
+const sendNotification = (subscription, payload) => {
+    return webpush.sendNotification(subscription, payload).catch(error => {
+        console.error('Error sending notification', error);
+    });
+};
+
+// 5분마다 알림 보내기
+cron.schedule('*/5 * * * *', async () => {
+    console.log('Checking for records older than 2 hours');
+
+    const query = ` SELECT userIdx, midx 
+    FROM mininglog 
+    WHERE regdate BETWEEN DATE_SUB(NOW(), INTERVAL 8 HOUR) AND DATE_SUB(NOW(), INTERVAL 2 HOUR)
+        AND sendpushYN = 'N'
+        AND memo LIKE '%WEB MINING%';
+    `;
+
+    try {
+        const results = await loadDB(query);
+
+        for (const row of results) {
+            const userIdx = row.userIdx;
+            const midx = row.midx;
+
+            const subscriptionQuery = ` SELECT * FROM subscriptions WHERE userIdx = ? `;
+            const subs = await loadDB(mysql.format(subscriptionQuery, [userIdx]));
+
+            for (const sub of subs) {
+                const subscription = {
+                    endpoint: sub.endpoint,
+                    keys: {
+                        p256dh: sub.keys_p256dh,
+                        auth: sub.keys_auth
+                    }
+                };
+
+                const payload = JSON.stringify({
+                    title: 'CEIK 알림',
+                    body: 'CEIK 적립이 가능해요!',
+                    url: 'https://ceik.c4ei.net'  // 이동할 URL
+                });
+                await sendNotification(subscription, payload);
+
+                // 알림을 보낸 후 sendpushYN 값을 Y로 업데이트
+                const updateQuery = ` UPDATE mininglog SET sendpushYN = 'Y' WHERE midx = ? `;
+                await saveDB(mysql.format(updateQuery, [midx]));
+            }
+        }
+    } catch (error) {
+        console.error('Error querying database:', error);
+    }
+});
+// ######################### web push end #########################
 
 
 function getCurTimestamp() {

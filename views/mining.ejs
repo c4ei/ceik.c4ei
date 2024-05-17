@@ -102,7 +102,7 @@
 </head>
 <body>
     <div class="container">
-        <h1>CEIK MINING</h1>
+        <h1>CEIK MINING Ver 0.2</h1>
         <img src="https://i.ibb.co/dKbPkVt/c4eix200t-Logo.png" alt="AAH265" border="0" width="128" height="128" >
         <div class="user-info">
             <p>전송가능 CEIK 수량 : <span id="accumulatedCount"><%=aah_balance%></span> &nbsp;
@@ -111,6 +111,7 @@
             <p>내 파티원 수 : <%=party_mem_cnt%> <% if (party_mem_cnt>0){ %> <font color="red">Hash+</font> <% } %> </p>
         </div>
         <button id="showMoreButton" onclick="jsfn_lyShow()">추가정보</button>
+        <button id="subscribeButton">적립가능시 알리기</button>
         <div id="lyNoShow" style="display: none;">
             <p>내 Email 주소 : <%=email%></p>
             <p>내 CEIK 주소 : <br /> <span id="aah_address">
@@ -143,6 +144,9 @@
                 <a href ="https://klaytnscope.com/account/<%=user_add_addr%>?tabId=tokenBalance" target="_blank"><%=user_add_addr%></a></span><br /> 
                 ※추가 CEIK 주소 존재 시 해당 주소로 전송 됩니다.<br />
                 ※If an additional CEIK address exists, it will be sent to that address.
+            </p>
+            <p>
+            <a href="https://klayswap.com/exchange/swap?output=0x18814b01b5cc76f7043e10fd268cc4364df47da0" target="_blank"><img src="https://s.klayswap.com/img/token/ic-ceik.png" style="width:20px;height:20px" border="0">CEIK구매하러가기(BUY CEIK)</a>
             </p>
             <% } %>
 
@@ -218,6 +222,14 @@
         const makeLinkButton = document.getElementById('makeLinkButton');
         const makePartyButton = document.getElementById('makePartyButton');
         const sendAAHButton = document.getElementById('sendAAHButton');
+        const subscribeButton = document.getElementById('subscribeButton');
+        let _subsc_cnt = "<%=subsc_cnt%>";
+        if(_subsc_cnt>0){
+            subscribeButton.disabled=true;
+            subscribeButton.textContent="적립가능시 알리기 ON";
+        }else{
+            subscribeButton.textContent="적립가능시 알리기 OFF";
+        }
         let _serverSpendTime = "<%=ing_sec%>" ; // 
         let _serverPlusTime = _serverSpendTime * 0.0000001;  // 0.0000000001
         let MiningQty = _serverPlusTime;
@@ -333,6 +345,75 @@
             accumulateButton.disabled = true;
             accumulateButton.style.backgroundColor = "#c5cacf";
         }
+    </script>
+    <script>
+        const publicVapidKey = '<%= VAPID_PUBLIC %>';
+        const userIdx = '<%= userIdx %>';
+
+        function urlBase64ToUint8Array(base64String) {
+            const padding = '='.repeat((4 - base64String.length % 4) % 4);
+            const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+            const rawData = window.atob(base64);
+            const outputArray = new Uint8Array(rawData.length);
+            for (let i = 0; i < rawData.length; ++i) {
+                outputArray[i] = rawData.charCodeAt(i);
+            }
+            return outputArray;
+        }
+
+        function subscribeUser(registration) {
+            return registration.pushManager.getSubscription()
+                .then(subscription => {
+                    if (subscription) {
+                        return subscription.unsubscribe();
+                    }
+                })
+                .then(() => {
+                    return registration.pushManager.subscribe({
+                        userVisibleOnly: true,
+                        applicationServerKey: urlBase64ToUint8Array(publicVapidKey)
+                    });
+                })
+                .then(subscription => {
+                    console.log('User is subscribed:', subscription);
+
+                    return fetch('/subscribe', {
+                        method: 'POST',
+                        body: JSON.stringify({ userIdx, subscription }),
+                        headers: {
+                            'Content-Type': 'application/json'
+                        }
+                    });
+                })
+                .then(response => {
+                    if (response.ok) {
+                        console.log('Subscription sent to server');
+                    } else {
+                        console.error('Failed to send subscription to server');
+                    }
+                })
+                .catch(error => {
+                    console.error('Subscription failed:', error);
+                });
+        }
+
+        document.getElementById('subscribeButton').addEventListener('click', () => {
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.register('/service-worker.js')
+                    .then(registration => {
+                        console.log('Service Worker registered');
+                        return navigator.serviceWorker.ready;
+                    })
+                    .then(registration => {
+                        subscribeUser(registration);
+                    })
+                    .catch(error => {
+                        console.error('Service Worker registration failed:', error);
+                    });
+            } else {
+                console.error('Service workers are not supported in this browser');
+            }
+        });
     </script>
 <form id="f_mining" name="f_mining" method="post">
     <input type="hidden" id="f_aah_balance" name="f_aah_balance" />
