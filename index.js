@@ -82,9 +82,13 @@ async function saveDB(strSQL){
   }
 }
 
-
+//#########################################################################
+//#########################################################################
 const _sendAmt = "0.0001";
-const _regMiningQty = "0.00000010";
+const _regMiningQty = "0.5";  // 회원가입시의 CEIK Qty
+const Qty_CeikPerSec = "0.000011574"; // 1초당 얻는 CEIK (1일 1CEIK) 2024-05-21
+//#########################################################################
+//#########################################################################
 const Web3 = require("web3");
 const web3 = new Web3(new Web3.providers.HttpProvider(process.env.AAH_RPC));
 
@@ -269,7 +273,8 @@ app.get('/', async (req, res) => {
             VAPID_PUBLIC: publicVapidKey,
             subsc_cnt: _subsc_cnt,
             miningRate: miningRate,
-            miningFrequency: miningFrequency
+            miningFrequency: miningFrequency,
+            Qty_CeikPerSec: Qty_CeikPerSec
         });
     }
 });

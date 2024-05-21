@@ -234,7 +234,7 @@
             subscribeButton.textContent="적립가능시 알리기 OFF";
         }
         let _serverSpendTime = "<%=ing_sec%>" ; // 
-        let _serverPlusTime = _serverSpendTime * 0.0000001;  // 0.0000000001
+        let _serverPlusTime = _serverSpendTime * <%=Qty_CeikPerSec%>;  // 0.0000000001
         let MiningQty = _serverPlusTime;
         // alert(_serverPlusTime+":_serverPlusTime/n"+"<%=ing_sec%>");
         let intervalId;
@@ -259,7 +259,7 @@
                 // const displayCount = MiningQty;
                 // CEIK decimal 8 = 10000000
                 // MiningQty += 0.0000001; // 씩 증가
-                MiningQty += 0.000011574; // 씩 증가
+                MiningQty += <%=Qty_CeikPerSec%>; // 씩 증가
                 // MiningQty = MiningQty + Math.round(10000000 / 86400).toFixed(8);
                 const integerPart = Math.floor(MiningQty); // 정수 부분
                 let decimalPart = (MiningQty - integerPart).toFixed(7).slice(2); // 소수 부분
