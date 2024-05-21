@@ -116,27 +116,27 @@
             <p>내 Email 주소 : <%=email%></p>
             <p>내 CEIK 주소 : <br /> <span id="aah_address">
                 <a href ="https://klaytnscope.com/account/<%=aah_address%>?tabId=tokenBalance" target="_blank"><%=aah_address%></a></span></p>
-            <p>
-                <div class="info">
-                    내 지갑 CEIK 예치수량 : <span id="aah_real_balance"><%=aah_real_balance%></span> 
-                    <%      if (aah_real_balance>10000000000){ %> <font color="red">Hash+ 250</font> <% } 
-                       else if (aah_real_balance>5000000000) { %> <font color="red">Hash+ 150</font> <% }
-                       else if (aah_real_balance>2000000000) { %> <font color="red">Hash+ 50</font> <% } 
-                       else if (aah_real_balance>1000000000) { %> <font color="red">Hash+ 20</font> <% } 
-                       else if (aah_real_balance>500000000)  { %> <font color="red">Hash+ 5</font> <% } 
-                       else if (aah_real_balance>100000000)  { %> <font color="red">Hash+ 2</font> <% } 
-                       else if (aah_real_balance>0)   { %> <font color="red">Hash+ 1</font> <% } %>
-                    <div class="tooltip" style="font-size: 11px;">
-                        CEIK 예치 100억 초과  Hash파워+250<br>
-                        CEIK 예치 50억 초과   Hash파워+150<br>
-                        CEIK 예치 20억 초과   Hash파워+50<br>
-                        CEIK 예치 10억 초과   Hash파워+20<br>
-                        CEIK 예치 5억 초과    Hash파워+5<br>
-                        CEIK 예치 1억 초과    Hash파워+2<br>
-                        CEIK 예치 0 초과      Hash파워+1<br>
-                    </div>
+            
+            <div class="info">
+                내 지갑 CEIK 예치수량 : <span id="aah_real_balance"><%=aah_real_balance%></span> 
+                <%      if (aah_real_balance>10000000000){ %> <font color="red">Hash+ 250</font> <% } 
+                    else if (aah_real_balance>5000000000) { %> <font color="red">Hash+ 150</font> <% }
+                    else if (aah_real_balance>2000000000) { %> <font color="red">Hash+ 50</font> <% } 
+                    else if (aah_real_balance>1000000000) { %> <font color="red">Hash+ 20</font> <% } 
+                    else if (aah_real_balance>500000000)  { %> <font color="red">Hash+ 5</font> <% } 
+                    else if (aah_real_balance>100000000)  { %> <font color="red">Hash+ 2</font> <% } 
+                    else if (aah_real_balance>0)   { %> <font color="red">Hash+ 1</font> <% } %>
+                <div class="tooltip" style="font-size: 11px;">
+                    CEIK 예치 100억 초과  Hash파워+250<br>
+                    CEIK 예치 50억 초과   Hash파워+150<br>
+                    CEIK 예치 20억 초과   Hash파워+50<br>
+                    CEIK 예치 10억 초과   Hash파워+20<br>
+                    CEIK 예치 5억 초과    Hash파워+5<br>
+                    CEIK 예치 1억 초과    Hash파워+2<br>
+                    CEIK 예치 0 초과      Hash파워+1<br>
                 </div>
-            </p>
+            </div>
+            <br />
             <button id="addAddrButton" style="width: 250px;height: 30px;padding: 2px 2px 2px 2px;background-color: chartreuse;color: #ff0000;"
             ><a href="/add_address">전송용 지갑주소 추가</a></button>
             <% if(user_add_addr!=null){ %>
@@ -150,6 +150,9 @@
             </p>
             <% } %>
 
+            <p>Mining Rate: <%= miningRate %> CEIK per <%= miningFrequency %> hours</p>
+            <!-- <p>Time since last mining: <%= ing_sec %> seconds</p> -->
+            <!-- miningSettingsForm DELETE -->
 <!-- 
     CEIK 예치수량 10000000000 초과 Hash파워 증가 250
     CEIK 예치수량 5000000000  초과 Hash파워 증가 150
@@ -252,7 +255,12 @@
             if(minusInt>500){ minusInt = 500; } // max 500 invate member 
             const randomInterval = 1100 - parseInt(minusInt); // 1초마다
             setTimeout(() => {
-                MiningQty += 0.0000001; // 씩 증가
+                // MiningQty = MiningQty + parseFloat(MiningQty + (10000000 / 86400)); // 씩 증가
+                // const displayCount = MiningQty;
+                // CEIK decimal 8 = 10000000
+                // MiningQty += 0.0000001; // 씩 증가
+                MiningQty += 0.000011574; // 씩 증가
+                // MiningQty = MiningQty + Math.round(10000000 / 86400).toFixed(8);
                 const integerPart = Math.floor(MiningQty); // 정수 부분
                 let decimalPart = (MiningQty - integerPart).toFixed(7).slice(2); // 소수 부분
                 let randomDigits = Math.floor(Math.random() * 1000).toString().padStart(3, '0'); // 랜덤한 3자리 생성
@@ -275,12 +283,12 @@
             let _aah_balance  ="<%=aah_balance%>";
             let _email = document.getElementById("email").value;
             let _userIdx = document.getElementById("userIdx").value;
-            if(_aah_balance<1){
-                alert('최소 전송 가능 수량은 1 CEIK 입니다.\nThe minimum transferable quantity is 1 CEIK.');
+            if(_aah_balance<1000){
+                alert('최소 전송 가능 수량은 1000 CEIK 입니다.\nThe minimum transferable quantity is 1000 CEIK.');
                 return;
             }
-            if(_aah_balance>100){
-                alert('최대 전송 가능 수량은 100 CEIK 입니다.\nThe maximum transferable quantity is 100 CEIK.');
+            if(_aah_balance>100000){
+                alert('최대 전송 가능 수량은 100000 CEIK 입니다.\nThe maximum transferable quantity is 100000 CEIK.');
                 return;
             }
             let f_mining = document.getElementById("f_mining");
@@ -315,25 +323,36 @@
             MiningQtyDisplay.style.color = 'black';
             intervalId = null;
 
-            // 적립 버튼을 누를 때 서버로 데이터를 전송
-            fetch('/accumulate', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ MiningQty: _miningQty , email:_email, userIdx:_userIdx })
-            })
-            .then(response => {
-                if (response.ok) {
-                    alert( _miningQty + ' 적립이 완료되었습니다.');
-                    document.location.href='/';
-                } else {
-                    alert('적립에 실패했습니다.');
-                }
-            })
-            .catch(error => {
-                alert('네트워크 오류:', error);
-            });
+            // // 적립 버튼을 누를 때 서버로 데이터를 전송
+            // fetch('/accumulate', {
+            //     method: 'POST',
+            //     headers: {
+            //         'Content-Type': 'application/json'
+            //     },
+            //     body: JSON.stringify({ MiningQty: _miningQty , email:_email, userIdx:_userIdx })
+            // })
+            // .then(response => {
+            //     if (response.ok) {
+            //         alert( _miningQty + ' 적립이 완료되었습니다.');
+            //         document.location.href='/';
+            //     } else {
+            //         alert('적립에 실패했습니다.');
+            //     }
+            // })
+            // .catch(error => {
+            //     alert('네트워크 오류:', error);
+            // });
+            let m_accu = document.getElementById("m_accu")
+            let m_miningQty = document.getElementById("m_miningQty");
+            let m_email = document.getElementById("m_email");
+            let m_userIdx = document.getElementById("m_userIdx");
+// alert(_miningQty+":_miningQty");
+            m_miningQty.value = _miningQty;
+            m_email.value = _email;
+            m_userIdx.value = _userIdx;
+            m_accu.action="/accumulate";
+            m_accu.submit();
+
             startButton.disabled=false;
             startButton.style.backgroundColor = "#007bff";
         });
@@ -420,5 +439,11 @@
     <input type="hidden" id="f_email" name="f_email" />
     <input type="hidden" id="f_userIdx" name="f_userIdx" />
 </form>
+<form id="m_accu" name="m_accu" method="post">
+    <input type="hidden" id="m_miningQty" name="m_miningQty" />
+    <input type="hidden" id="m_email" name="m_email" />
+    <input type="hidden" id="m_userIdx" name="m_userIdx" />
+</form>
+
 </body>
 </html>

@@ -190,6 +190,112 @@ app.get('/', async (req, res) => {
     if (!req.session.email) {
         res.redirect('/login');
     } else {
+        let _email = req.session.email;
+        let _userIdx = req.session.userIdx;
+        let _aah_real_balance = "0";
+        let _aah_balance = "0";
+        let _reffer_id = "0";
+        let _reffer_cnt = "0";
+        let _pub_key = "";
+        let _user_add_addr = "";
+
+        let sql = "SELECT userIdx, pub_key, aah_balance, aah_real_balance, reffer_id, reffer_cnt, user_add_addr FROM users WHERE userIdx='" + _userIdx + "'";
+        let result = await loadDB(sql);
+        if (result.length > 0) {
+            _aah_balance = result[0].aah_balance;
+            _reffer_id = result[0].reffer_id;
+            _reffer_cnt = result[0].reffer_cnt;
+            _pub_key = result[0].pub_key;
+            _aah_real_balance = result[0].aah_real_balance;
+            _user_add_addr = result[0].user_add_addr;
+        }
+
+        let sql1 = "SELECT COUNT(midx) cnt FROM mininglog WHERE useridx = '" + _userIdx + "'";
+        let result1 = await loadDB(sql1);
+        let _cnt = result1[0].cnt;
+        let _ing_sec = 0;
+        if (_cnt > 0) {
+            let sql2 = "SELECT TIMESTAMPDIFF(second, regdate, NOW()) AS sec FROM mininglog WHERE useridx='" + _userIdx + "' AND midx=(SELECT MAX(midx) FROM mininglog WHERE useridx='" + _userIdx + "')";
+            let result2 = await loadDB(sql2);
+            _ing_sec = result2[0].sec;
+        }
+        if (_ing_sec > 86400) { _ing_sec = 86400; }
+
+        let sql5 = "SELECT COUNT(party_idx) party_cnt FROM party_member WHERE user_idx = '" + _userIdx + "'";
+        let result5 = await loadDB(sql5);
+        let _party_cnt = result5[0].party_cnt;
+        let _party_mem_cnt = 0;
+        if (_party_cnt > 0) {
+            let sql6 = "SELECT count(idx) party_mem_cnt FROM party_member WHERE party_idx=(SELECT party_idx FROM party_member WHERE user_idx='" + _userIdx + "')";
+            let result6 = await loadDB(sql6);
+            _party_mem_cnt = result6[0].party_mem_cnt;
+        }
+
+        let sql6 = "SELECT COUNT(userIdx) subsc_cnt FROM subscriptions WHERE userIdx = '" + _userIdx + "'";
+        let result6 = await loadDB(sql6);
+        let _subsc_cnt = result6[0].subsc_cnt;
+
+        // 사용자 채굴 설정 가져오기 및 없으면 기본 값 삽입
+        let sqlMining = "SELECT rate, frequency FROM mining_settings WHERE userIdx = '" + _userIdx + "'";
+        let resultMining = await loadDB(sqlMining);
+        let miningRate, miningFrequency;
+
+        if (resultMining.length > 0) {
+            miningRate = resultMining[0].rate;
+            miningFrequency = resultMining[0].frequency;
+        } else {
+            miningRate = 1; // 기본 채굴 속도 24시간 1 CEIK
+            miningFrequency = 24; // 기본 빈도 (24시간)
+
+            // 기본 값 삽입
+            let insertMining = `
+                INSERT INTO mining_settings (userIdx, rate, frequency)
+                VALUES (?, ?, ?)
+            `;
+            await loadDB(mysql.format(insertMining, [_userIdx, miningRate, miningFrequency]));
+        }
+
+        res.render('mining', {
+            email: _email,
+            userIdx: _userIdx,
+            aah_balance: _aah_balance,
+            party_mem_cnt: _party_mem_cnt,
+            reffer_id: _reffer_id,
+            reffer_cnt: _reffer_cnt,
+            aah_address: _pub_key,
+            aah_real_balance: _aah_real_balance,
+            ing_sec: _ing_sec,
+            user_add_addr: _user_add_addr,
+            VAPID_PUBLIC: publicVapidKey,
+            subsc_cnt: _subsc_cnt,
+            miningRate: miningRate,
+            miningFrequency: miningFrequency
+        });
+    }
+});
+
+app.post('/update-mining-settings', async (req, res) => {
+    const { userIdx, rate, frequency } = req.body;
+    const sql = `
+        INSERT INTO mining_settings (userIdx, rate, frequency)
+        VALUES (?, ?, ?)
+        ON DUPLICATE KEY UPDATE rate=VALUES(rate), frequency=VALUES(frequency)
+    `;
+
+    try {
+        await loadDB(mysql.format(sql, [userIdx, rate, frequency]));
+        res.status(200).json({ success: true });
+    } catch (error) {
+        console.error('Error updating mining settings:', error);
+        res.status(500).json({ success: false, error: 'Database error' });
+    }
+});
+
+/*
+app.get('/', async (req, res) => {
+    if (!req.session.email) {
+        res.redirect('/login');
+    } else {
         // res.sendFile(STATIC_PATH + '/index.html')
         let _email = req.session.email;
         let _userIdx = req.session.userIdx;
@@ -240,6 +346,8 @@ app.get('/', async (req, res) => {
             , VAPID_PUBLIC:publicVapidKey , subsc_cnt:_subsc_cnt});
     }
 });
+
+*/
 
 app.get('/login', (req, res) => {
     res.render('login');
@@ -675,46 +783,61 @@ app.post('/partymemberjoinok', async (req, res) => {
 // 데이터베이스 시뮬레이션용 변수
 // let accumulatedPoints = 0;
 app.post('/accumulate', async (req, res) => {
-    const { MiningQty , userIdx , email } = req.body;
+    const { m_miningQty, m_userIdx , m_email } = req.body;
     // MiningQty = jsfnRepSQLinj(MiningQty);
     // userIdx = jsfnRepSQLinj(userIdx);
     // email = jsfnRepSQLinj(email);
     let err_msg="";
     let chk_email = req.session.email;
     let chk_userIdx = req.session.userIdx;
-    if(userIdx!=chk_userIdx || email!=chk_email){
+    if(m_userIdx!=chk_userIdx || m_email!=chk_email){
         err_msg= err_msg +" 세션에 문제가있습니다. 다시 로그인 해 주세요.";
         res.render('error', { err_msg:err_msg});
         return;
     }
     var user_ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress || req.socket.remoteAddress || req.connection.socket.remoteAddress;
     let _err = ""
-    let sql1 = "SELECT COUNT(midx) cnt FROM mininglog WHERE useridx='"+userIdx+"'" ;
+    let sql1 = "SELECT COUNT(midx) cnt FROM mininglog WHERE useridx='"+m_userIdx+"'" ;
     let result1 = await loadDB(sql1);
     let _cnt = result1[0].cnt;
     let _ing_sec = 0;
     if(_cnt>0){
-        let sql2 = "SELECT TIMESTAMPDIFF(second, regdate, NOW()) AS sec FROM mininglog WHERE useridx='"+userIdx+"' AND midx=(SELECT MAX(midx) FROM mininglog WHERE useridx='"+userIdx+"')";
+        let sql2 = "SELECT TIMESTAMPDIFF(second, regdate, NOW()) AS sec FROM mininglog WHERE useridx='"+m_userIdx+"' AND midx=(SELECT MAX(midx) FROM mininglog WHERE useridx='"+m_userIdx+"')";
         let result2 = await loadDB(sql2);
         _ing_sec = result2[0].sec;
     }
     if(_ing_sec>86400){_ing_sec = 86400;}
 
+    if(m_miningQty>1.5){
+        _err = _err + email +" 님 한번에 1.5 CEIK 초과 채굴은 불가능 합니다.";
+        let _errAlert = "<script>alert('한번에 1.5 CEIK 초과 채굴은 불가능 합니다. (It is not possible to mine more than 1.5 CEIK at one time.)');document.location.href='/mining';</script>";
+        res.send(_errAlert);
+        return;
+    }
     if(_cnt==0||_ing_sec>7200){
-        let sql2 = "UPDATE users set aah_balance = CAST(aah_balance AS DECIMAL(22,8)) + CAST('"+MiningQty+"' AS DECIMAL(22,8)), last_reg=now(), last_ip='"+user_ip+"' WHERE userIdx = '"+userIdx+"'";
+        let sql2 = "UPDATE users set aah_balance = CAST(aah_balance AS DECIMAL(22,8)) + CAST('"+m_miningQty+"' AS DECIMAL(22,8)), last_reg=now(), last_ip='"+user_ip+"' WHERE userIdx = '"+m_userIdx+"'";
         try{
             await saveDB(sql2);
-            console.log('적립된 포인트: %s / %s / %s', MiningQty , userIdx , email);
-            let _memo2 = email +" WEB MINING ";
-            await fn_setMiningLog(userIdx,MiningQty,_memo2,user_ip);
+            console.log('적립된 포인트: %s / %s / %s', m_miningQty , m_userIdx , m_email);
+            let _memo2 = m_email +" WEB MINING ";
+            await fn_setMiningLog(m_userIdx,m_miningQty,_memo2,user_ip);
+
+            let _errAlert = "<script>alert(' "+m_miningQty+" 포인트 적립 - "+m_email+"');document.location.href='/mining';</script>";
+            res.send(_errAlert);
+            return;
         } catch(e) {
             console.log(sql2);
         }
     }else{
-        _err = _err + email +" : 2 hours not passed";
+        _err = _err + m_email +" : 2 hours not passed";
+        let _errAlert = "<script>alert('2시간 마다 가능 합니다. (is possible every 2 hours.)');document.location.href='/mining';</script>";
+        res.send(_errAlert);
+        return;
     }
 
-    res.sendStatus(200);
+    // res.sendStatus(200);
+    res.redirect('/');
+    return;
 });
 
 app.post('/sendAAH', async (req, res) => {
@@ -864,10 +987,25 @@ app.delete('/unsubscribe', async (req, res) => {
     }
 });
 
-const sendNotification = (subscription, payload) => {
-    return webpush.sendNotification(subscription, payload).catch(error => {
-        console.error('Error sending notification', error);
-    });
+const sendNotification = async (subscription, payload) => {
+    try {
+        await webpush.sendNotification(subscription, payload);
+        console.log('Notification sent successfully');
+    } catch (error) {
+        console.error('Error sending notification:', error);
+        if (error.statusCode === 410) {
+            // 구독이 만료되었거나 취소된 경우
+            const { endpoint } = subscription;
+            console.log('Subscription has unsubscribed or expired:', endpoint);
+            try {
+                const strSQL = `DELETE FROM subscriptions WHERE endpoint = ?`;
+                await saveDB(mysql.format(strSQL, [endpoint]));
+                console.log('Expired subscription deleted from database');
+            } catch (dbError) {
+                console.error('Error deleting expired subscription from database:', dbError);
+            }
+        }
+    }
 };
 
 // 5분마다 알림 보내기

@@ -1,0 +1,29 @@
+
+            <form id="miningSettingsForm">
+                <label for="rate">Mining Rate (CEIK):</label>
+                <input type="number" id="rate" name="rate" value="<%= miningRate %>" step="0.01"><br />
+                <label for="frequency">Frequency (hours):</label>
+                <input type="number" id="frequency" name="frequency" value="<%= miningFrequency %>">
+                <button type="submit">Save Settings</button>
+            </form>
+        
+            <script>
+                document.getElementById('miningSettingsForm').addEventListener('submit', async function (e) {
+                    e.preventDefault();
+                    const rate = document.getElementById('rate').value;
+                    const frequency = document.getElementById('frequency').value;
+                    const response = await fetch('/update-mining-settings', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ rate, frequency, userIdx: '<%= userIdx %>' })
+                    });
+                    const result = await response.json();
+                    if (result.success) {
+                        alert('Settings updated successfully');
+                    } else {
+                        alert('Error updating settings');
+                    }
+                });
+            </script>
