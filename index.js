@@ -873,6 +873,11 @@ app.post('/sendAAH', async (req, res) => {
         _user_add_addr = result[0].user_add_addr;
     }
 
+    if(_aah_balance<30){
+        let _errAlert = "<script>alert('최소 전송 수량은 30 CEIK 부터 입니다. 현재 CEIK "+_aah_balance+" ');document.location.href='/mining';</script>";
+        res.send(_errAlert);
+        return;
+    }
     let sql0 = "SELECT count(userIdx) AS cnt FROM sendlog WHERE userIdx ='"+chk_userIdx+"' and memo='CEIK_MINING' and regdate > DATE_ADD(now(), INTERVAL -7 HOUR)";
     let result0 = await loadDB(sql0);
     let mining_Cnt = result0[0].cnt;
