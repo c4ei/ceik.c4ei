@@ -25,7 +25,8 @@
             justify-content: center;
             align-items: center;
             height: 100vh;
-            background-color: #f0f0f0;
+            background-color: #12485c;
+			color:#ebeb00;
         }
 
         .container {
@@ -34,14 +35,22 @@
             padding: 20px;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
             text-align: center;
+            background-image: url("/size_whale.jpg") ;background-size : cover;
         }
 
         h1 {
-            color: #333;
+            color: #f8ff92;
+            background:#12485c;
+            opacity:0.5;
+        }
+        p {
+            color: yellow;
+            background:#12485c;
+            opacity:0.5;
         }
 
         .user-info {
-            margin-top: 20px;
+            margin-top: 5px;
         }
 
         button {
@@ -71,7 +80,7 @@
         }
         #clock {
             font-size: 48px;
-            color: #333;
+            color: #ccd366;
         }
         .info {
             padding: 10px;
@@ -103,13 +112,19 @@
 <body>
     <div class="container">
         <h1>CEIK MINING V0.21</h1>
-        <img src="https://i.ibb.co/dKbPkVt/c4eix200t-Logo.png" alt="AAH265" border="0" width="128" height="128" >
+        <img src="https://i.ibb.co/dKbPkVt/c4eix200t-Logo.png" alt="AAH265" border="0" width="64" height="64" >
         <div class="user-info">
-            <p>전송가능 CEIK 수량 : <span id="accumulatedCount"><%=aah_balance%></span> &nbsp;
-                <button id="sendAAHButton" style="width: 50px;height: 30px;padding: 2px 2px 2px 2px;background-color: chartreuse;color: #ff0000;">전송</button></p>
-            <p>내 추천인 수 : <%=reffer_cnt%> <% if (reffer_cnt>0){ %><font color="red">Hash+</font><% } %> </p>
-            <p>내 파티원 수 : <%=party_mem_cnt%> <% if (party_mem_cnt>0){ %> <font color="red">Hash+</font> <% } %> </p>
+            <p style="padding-bottom: 15px;">
+                전송가능 CEIK 수량 : 
+                <span id="accumulatedCount"><%=aah_balance%></span>
+                <button id="sendAAHButton" style="width: 50px;height: 26px;padding: 2px 2px 2px 2px;background-color: chartreuse;color: #ff0000;">전송</button>
+            </p>
+            
         </div>
+        
+        <p>내 추천인 수 : <%=reffer_cnt%> <% if (reffer_cnt>0){ %><font color="red">Hash+</font><% } %> </p>
+        <p>내 파티원 수 : <%=party_mem_cnt%> <% if (party_mem_cnt>0){ %> <font color="red">Hash+</font> <% } %> </p>
+
         <button id="showMoreButton" onclick="jsfn_lyShow()">추가정보</button>
         <button id="subscribeButton">적립가능시 알리기</button>
         <div id="lyNoShow" style="display: none;">
@@ -309,11 +324,9 @@
             }
             startButton.disabled=true;
             startButton.style.backgroundColor = "#c5cacf";
-            // alert('click');
         });
 
         accumulateButton.addEventListener('click', () => {
-            // alert(MiningQtyDisplay.textContent+" : MiningQtyDisplay");
             let _miningQty = MiningQtyDisplay.textContent;
             let _email = document.getElementById("email").value;
             let _userIdx = document.getElementById("userIdx").value;
@@ -323,30 +336,10 @@
             MiningQtyDisplay.style.color = 'black';
             intervalId = null;
 
-            // // 적립 버튼을 누를 때 서버로 데이터를 전송
-            // fetch('/accumulate', {
-            //     method: 'POST',
-            //     headers: {
-            //         'Content-Type': 'application/json'
-            //     },
-            //     body: JSON.stringify({ MiningQty: _miningQty , email:_email, userIdx:_userIdx })
-            // })
-            // .then(response => {
-            //     if (response.ok) {
-            //         alert( _miningQty + ' 적립이 완료되었습니다.');
-            //         document.location.href='/';
-            //     } else {
-            //         alert('적립에 실패했습니다.');
-            //     }
-            // })
-            // .catch(error => {
-            //     alert('네트워크 오류:', error);
-            // });
             let m_accu = document.getElementById("m_accu")
             let m_miningQty = document.getElementById("m_miningQty");
             let m_email = document.getElementById("m_email");
             let m_userIdx = document.getElementById("m_userIdx");
-// alert(_miningQty+":_miningQty");
             m_miningQty.value = _miningQty;
             m_email.value = _email;
             m_userIdx.value = _userIdx;

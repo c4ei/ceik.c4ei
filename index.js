@@ -354,6 +354,10 @@ app.get('/', async (req, res) => {
 
 */
 
+app.get('/main', (req, res) => {
+    res.render('main');
+});
+
 app.get('/login', (req, res) => {
     res.render('login');
 });
@@ -1020,7 +1024,7 @@ const sendNotification = async (subscription, payload) => {
 
 // 5분마다 알림 보내기
 cron.schedule('*/5 * * * *', async () => {
-    console.log('Checking for records older than 2 hours');
+    console.log('Checking for records older than 2 hours-5분마다 알림 보내기');
 
     const query = ` SELECT userIdx, midx 
     FROM mininglog 
