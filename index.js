@@ -231,6 +231,21 @@ app.get('/', async (req, res) => {
         }
         if (_ing_sec > 86400) { _ing_sec = 86400; }
 
+        // ########################### start boost #### 부스터 id 로 접근해야 하지만 부스터는 하나씩 쓴다고 가정 하고 userIdx 로 접근
+        let add_sec = 0;
+        let sql12 = "SELECT ROUND((multiplier*duration) - (duration)) add_sec FROM boosters WHERE userIdx='" + _userIdx + "' and useYN='Y' and processYN='N'";
+        let result12 = await loadDB(sql12);
+        if (result12.length > 0) {
+            add_sec = result12[0].add_sec;
+        }
+        if(add_sec>0){
+            let sql13 = "update boosters SET processYN='Y' WHERE userIdx='" + _userIdx + "' and useYN='Y' and processYN='N'";
+            let result13 = await saveDB(sql13);
+        }
+        // 시간을 더해 주고 부스터는 종료 처리
+        _ing_sec = _ing_sec + add_sec;
+        // ########################### end boost ####
+        
         let sql5 = "SELECT COUNT(party_idx) party_cnt FROM party_member WHERE user_idx = '" + _userIdx + "'";
         let result5 = await loadDB(sql5);
         let _party_cnt = result5[0].party_cnt;
@@ -265,14 +280,15 @@ app.get('/', async (req, res) => {
             await loadDB(mysql.format(insertMining, [_userIdx, miningRate, miningFrequency]));
         }
 
-        let _bname="", _multiplier="", _duration="", _active="";
-        let getBoostersQuery = `SELECT id, userIdx, bname, multiplier, duration, active FROM boosters WHERE userIdx = ${_userIdx}  LIMIT 1 `;
+        let _boost_id="", _bname="", _multiplier="", _duration="", _active="";
+        let getBoostersQuery = `SELECT id, userIdx, bname, multiplier, duration, active FROM boosters WHERE userIdx = ${_userIdx} and useYN='N' LIMIT 5 `;
         let boosters = await loadDB(getBoostersQuery);
         if (boosters.length > 0) {
-            _bname = result[0].bname;
-            _multiplier = result[0].multiplier;
-            _duration = result[0].duration;
-            _active = result[0].active;
+            _boost_id = boosters[0].id;
+            _bname = boosters[0].bname;
+            _multiplier = boosters[0].multiplier;
+            _duration = boosters[0].duration;
+            _active = boosters[0].active;
         }
 
         res.render('mining', {
@@ -288,7 +304,7 @@ app.get('/', async (req, res) => {
             miningFrequency: miningFrequency,
             Qty_CeikPerSec: Qty_CeikPerSec,
             level : _level,exp : _exp, point: _point,
-            bname:_bname, multiplier:_multiplier, duration:_duration, active:_active
+            boost_id:_boost_id,bname:_bname, multiplier:_multiplier, duration:_duration, active:_active
         });
     }
 });
@@ -905,12 +921,46 @@ app.post('/add_addrok', async (req, res) => {
 
 // 부스터 활성화 로직
 app.post('/activateBooster', async (req, res) => {
-    const userIdx = req.body.userIdx;
-    const boosterId = req.body.boosterId;
+    if (!req.session.email) {
+        res.redirect('/login');
+        return;
+    }
+    const userIdx = req.body.b_userIdx;
+    const boosterId = req.body.b_boosterId;
+    if (req.session.userIdx!=userIdx) {
+        let _errAlert = "<script>alert('로그인한 사용자와 요청자의 id 가 달라서 처리가 불가능 합니다.');document.location.href='/';</script>";
+        res.send(_errAlert);
+        return;
+    }
 
-    let activateBoosterQuery = `UPDATE boosters SET active = TRUE WHERE id = ${boosterId} AND userIdx = ${userIdx}`;
+    let sql0 = `SELECT id,userIdx,bname,multiplier,duration,active,useYN,processYN,memo FROM boosters WHERE id = ${boosterId}`;
+    let result0 = await loadDB(sql0);
+    let _bname = "";
+    let _active = false;
+    let _useYN = "N";
+    let _processYN = "N";
+    if(result0.length>0){
+        _bname      = result0[0].bname;
+        _active     = result0[0].active;
+        _useYN      = result0[0]._useYN;
+        _processYN  = result0[0].processYN;
+    }else{
+        let _errAlert = "<script>alert('Booster id : "+boosterId +" - 해당하는 Boost 가 없습니다.');document.location.href='/';</script>";
+        res.send(_errAlert);
+        return;
+    }
+    if(_useYN=="Y"||_processYN=="Y"||_active){
+        let _errAlert = "<script>alert('Booster id : "+boosterId +" - 이미 사용된 boost 입니다.');document.location.href='/';</script>";
+        res.send(_errAlert);
+        return;
+    }
+    
+    var user_ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress || req.socket.remoteAddress || req.connection.socket.remoteAddress;
+    // ,processYN='N' Default
+    let activateBoosterQuery = `UPDATE boosters SET active=TRUE, usedate=now(), useip='${user_ip}', useYN='Y' WHERE id=${boosterId} AND userIdx=${userIdx}`;
     try {
         await saveDB(activateBoosterQuery);
+
         let _errAlert = "<script>alert('Booster "+boosterId +" activated for user "+userIdx +"');document.location.href='/';</script>";
         res.send(_errAlert);
         return;

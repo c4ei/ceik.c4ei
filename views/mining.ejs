@@ -55,7 +55,7 @@
         }
 
         button {
-            margin-top: 20px;
+            margin-top: 5px;
             padding: 10px 20px;
             background-color: #007bff;
             color: #fff;
@@ -114,22 +114,29 @@
 <body>
     <div class="container">
         <h1>CEIK MINING V0.3</h1>
-        <p>Level : <%= level %> / EXP : <%= exp %> / POINT : <%= point %></p>
         <img src="https://i.ibb.co/dKbPkVt/c4eix200t-Logo.png" alt="AAH265" border="0" width="64" height="64" >
         <div class="user-info">
-            <p style="padding-bottom: 15px;">
+            <p style="padding-top: 10px;padding-bottom: 10px;">
+                Level : <%= level %> / EXP : <%= exp %> / POINT : <%= point %>
+                <br />
                 전송가능 CEIK 수량 : 
                 <span id="accumulatedCount"><%=aah_balance%></span>
                 <button id="sendAAHButton" style="width: 50px;height: 26px;padding: 2px 2px 2px 2px;background-color: chartreuse;color: #ff0000;">전송</button>
+                <br />
+                내 추천인 수 : <%=reffer_cnt%> <% if (reffer_cnt>0){ %><font color="red">Hash+</font><% } %>
+                <br />
+                내 파티원 수 : <%=party_mem_cnt%> <% if (party_mem_cnt>0){ %> <font color="red">Hash+</font> <% } %>
+                <br />
+                <%if (bname!=""){ %>
+                    <%= bname %> (배속: <%= multiplier %>, Duration: <%= duration %> sec) 
+                    <a href="javascript:jsfn_useBoost('<%=boost_id%>','<%=bname%>')"><img src="/boost.png" alt="boost" border="0" width="32" height="32" style="vertical-align: bottom;"></a>
+                    </a>
+                <% } %> 
             </p>
         </div>
-        <p>내 추천인 수 : <%=reffer_cnt%> <% if (reffer_cnt>0){ %><font color="red">Hash+</font><% } %> </p>
-        <p>내 파티원 수 : <%=party_mem_cnt%> <% if (party_mem_cnt>0){ %> <font color="red">Hash+</font> <% } %> </p>
         
-        <%if (bname!=""){ %><p><%= bname %> (Multiplier: <%= multiplier %>, Duration: <%= duration %> seconds)</p> <% } %>
         <button id="showMoreButton" onclick="jsfn_lyShow()">추가정보</button>
         <button id="subscribeButton">적립가능시 알리기</button>
-        <img src="/boost.png" alt="boost" border="0" width="32" height="32" style="vertical-align: bottom;">
         <div id="lyNoShow" style="display: none;">
             <p>내 Email 주소 : <%=email%></p>
             <p>내 CEIK 주소 : <br /> <span id="aah_address">
@@ -222,6 +229,22 @@
         </script>
     </div>
     <script>
+        function jsfn_useBoost(b_id, b_name){
+            if(!confirm(b_name +" 부스터를 사용 하시겠습니까?")){
+                return;
+            }
+            let b_boost = document.getElementById("b_boost")
+            let b_boosterId = document.getElementById("b_boosterId");
+            let b_email = document.getElementById("b_email");
+            let b_userIdx = document.getElementById("b_userIdx");
+            let _email = document.getElementById("email").value;
+            let _userIdx = document.getElementById("userIdx").value;
+            b_boosterId.value = b_id;
+            b_email.value = _email;
+            b_userIdx.value = _userIdx;
+            b_boost.action="/activateBooster";
+            b_boost.submit();
+        }
         function jsfn_lyShow(){
             let lyNoShow = document.getElementById("lyNoShow");
             if(lyNoShow.style.display=="none"){
@@ -432,6 +455,12 @@
     <input type="hidden" id="m_miningQty" name="m_miningQty" />
     <input type="hidden" id="m_email" name="m_email" />
     <input type="hidden" id="m_userIdx" name="m_userIdx" />
+</form>
+
+<form id="b_boost" name="b_boost" method="post">
+    <input type="hidden" id="b_boosterId" name="b_boosterId" />
+    <input type="hidden" id="b_email" name="b_email" />
+    <input type="hidden" id="b_userIdx" name="b_userIdx" />
 </form>
 
 </body>
