@@ -27,6 +27,7 @@
             height: 100vh;
             background-color: #12485c;
 			color:#ebeb00;
+            background-image: url("/bg1.png") ;
         }
 
         .container {
@@ -41,12 +42,12 @@
         h1 {
             color: #f8ff92;
             background:#12485c;
-            opacity:0.5;
+            opacity:0.7;
         }
         p {
             color: yellow;
             background:#12485c;
-            opacity:0.5;
+            opacity:0.7;
         }
 
         .user-info {
@@ -111,7 +112,8 @@
 </head>
 <body>
     <div class="container">
-        <h1>CEIK MINING V0.21</h1>
+        <h1>CEIK MINING V0.3</h1>
+        <p>Level : <%= level %> / EXP : <%= exp %> / POINT : <%= point %></p>
         <img src="https://i.ibb.co/dKbPkVt/c4eix200t-Logo.png" alt="AAH265" border="0" width="64" height="64" >
         <div class="user-info">
             <p style="padding-bottom: 15px;">
@@ -119,18 +121,17 @@
                 <span id="accumulatedCount"><%=aah_balance%></span>
                 <button id="sendAAHButton" style="width: 50px;height: 26px;padding: 2px 2px 2px 2px;background-color: chartreuse;color: #ff0000;">전송</button>
             </p>
-            
         </div>
-        
         <p>내 추천인 수 : <%=reffer_cnt%> <% if (reffer_cnt>0){ %><font color="red">Hash+</font><% } %> </p>
         <p>내 파티원 수 : <%=party_mem_cnt%> <% if (party_mem_cnt>0){ %> <font color="red">Hash+</font> <% } %> </p>
-
+        
+        <%if (bname!=""){ %><p><%= bname %> (Multiplier: <%= multiplier %>, Duration: <%= duration %> seconds)</p> <% } %>
         <button id="showMoreButton" onclick="jsfn_lyShow()">추가정보</button>
         <button id="subscribeButton">적립가능시 알리기</button>
         <div id="lyNoShow" style="display: none;">
             <p>내 Email 주소 : <%=email%></p>
             <p>내 CEIK 주소 : <br /> <span id="aah_address">
-                <a href ="https://klaytnscope.com/account/<%=aah_address%>?tabId=tokenBalance" target="_blank"><%=aah_address%></a></span></p>
+                <a href ="https://klaytnscope.com/account/<%=aah_address%>?tabId=tokenBalance" target="_blank" style="color: #fff;"><%=aah_address%></a></span></p>
             
             <div class="info">
                 내 지갑 CEIK 예치수량 : <span id="aah_real_balance"><%=aah_real_balance%></span> 
@@ -156,12 +157,12 @@
             ><a href="/add_address">전송용 지갑주소 추가</a></button>
             <% if(user_add_addr!=null){ %>
             <p>추가 CEIK 주소 : <br /> <span id="user_add_addr">
-                <a href ="https://klaytnscope.com/account/<%=user_add_addr%>?tabId=tokenBalance" target="_blank"><%=user_add_addr%></a></span><br /> 
+                <a href ="https://klaytnscope.com/account/<%=user_add_addr%>?tabId=tokenBalance" target="_blank" style="color: #fff;"><%=user_add_addr%></a></span><br /> 
                 ※추가 CEIK 주소 존재 시 해당 주소로 전송 됩니다.<br />
                 ※If an additional CEIK address exists, it will be sent to that address.
             </p>
-            <p>
-            <a href="https://klayswap.com/exchange/swap?output=0x18814b01b5cc76f7043e10fd268cc4364df47da0" target="_blank"><img src="https://s.klayswap.com/img/token/ic-ceik.png" style="width:20px;height:20px" border="0">CEIK구매하러가기(BUY CEIK)</a>
+            <p >
+                <a href="https://klayswap.com/exchange/swap?output=0x18814b01b5cc76f7043e10fd268cc4364df47da0" target="_blank" style="color: #fff;"><img src="https://s.klayswap.com/img/token/ic-ceik.png" style="width:20px;height:20px" border="0">CEIK구매하러가기(BUY CEIK)</a>
             </p>
             <% } %>
 

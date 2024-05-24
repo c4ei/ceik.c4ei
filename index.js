@@ -202,8 +202,11 @@ app.get('/', async (req, res) => {
         let _reffer_cnt = "0";
         let _pub_key = "";
         let _user_add_addr = "";
+        let _level = "1";
+        let _exp = "0";
+        let _point = "0";
 
-        let sql = "SELECT userIdx, pub_key, aah_balance, aah_real_balance, reffer_id, reffer_cnt, user_add_addr FROM users WHERE userIdx='" + _userIdx + "'";
+        let sql = "SELECT userIdx, pub_key, aah_balance, aah_real_balance, reffer_id, reffer_cnt, user_add_addr, level, exp, point FROM users WHERE userIdx='" + _userIdx + "'";
         let result = await loadDB(sql);
         if (result.length > 0) {
             _aah_balance = result[0].aah_balance;
@@ -212,6 +215,9 @@ app.get('/', async (req, res) => {
             _pub_key = result[0].pub_key;
             _aah_real_balance = result[0].aah_real_balance;
             _user_add_addr = result[0].user_add_addr;
+            _level = result[0].level;
+            _exp = result[0].exp;
+            _point = result[0].point;
         }
 
         let sql1 = "SELECT COUNT(midx) cnt FROM mininglog WHERE useridx = '" + _userIdx + "'";
@@ -259,22 +265,30 @@ app.get('/', async (req, res) => {
             await loadDB(mysql.format(insertMining, [_userIdx, miningRate, miningFrequency]));
         }
 
+        let _bname="", _multiplier="", _duration="", _active="";
+        let getBoostersQuery = `SELECT id, userIdx, bname, multiplier, duration, active FROM boosters WHERE userIdx = ${_userIdx}  LIMIT 1 `;
+        let boosters = await loadDB(getBoostersQuery);
+        if (boosters.length > 0) {
+            _bname = result[0].bname;
+            _multiplier = result[0].multiplier;
+            _duration = result[0].duration;
+            _active = result[0].active;
+        }
+
         res.render('mining', {
-            email: _email,
-            userIdx: _userIdx,
-            aah_balance: _aah_balance,
+            email: _email, userIdx: _userIdx,
             party_mem_cnt: _party_mem_cnt,
-            reffer_id: _reffer_id,
-            reffer_cnt: _reffer_cnt,
-            aah_address: _pub_key,
-            aah_real_balance: _aah_real_balance,
+            reffer_id: _reffer_id, reffer_cnt: _reffer_cnt,
+            aah_address: _pub_key, aah_balance: _aah_balance, aah_real_balance: _aah_real_balance,
             ing_sec: _ing_sec,
             user_add_addr: _user_add_addr,
             VAPID_PUBLIC: publicVapidKey,
             subsc_cnt: _subsc_cnt,
             miningRate: miningRate,
             miningFrequency: miningFrequency,
-            Qty_CeikPerSec: Qty_CeikPerSec
+            Qty_CeikPerSec: Qty_CeikPerSec,
+            level : _level,exp : _exp, point: _point,
+            bname:_bname, multiplier:_multiplier, duration:_duration, active:_active
         });
     }
 });
@@ -296,63 +310,6 @@ app.post('/update-mining-settings', async (req, res) => {
     }
 });
 
-/*
-app.get('/', async (req, res) => {
-    if (!req.session.email) {
-        res.redirect('/login');
-    } else {
-        // res.sendFile(STATIC_PATH + '/index.html')
-        let _email = req.session.email;
-        let _userIdx = req.session.userIdx;
-        let _aah_real_balance = "0";
-        let _aah_balance = "0";
-        let _reffer_id = "0";
-        let _reffer_cnt = "0";
-        let _pub_key = "";
-        let _user_add_addr="";
-        let sql = "SELECT userIdx, pub_key, aah_balance, aah_real_balance, reffer_id, reffer_cnt, user_add_addr FROM users WHERE userIdx='"+_userIdx+"'";
-        let result = await loadDB(sql);
-        // console.log(result.length +" : result.length" + JSON.stringify(result[0]) );
-        if(result.length>0){
-            _aah_balance = result[0].aah_balance;
-            _reffer_id = result[0].reffer_id;
-            _reffer_cnt = result[0].reffer_cnt;
-            _pub_key = result[0].pub_key;
-            _aah_real_balance = result[0].aah_real_balance;
-            _user_add_addr = result[0].user_add_addr;
-        }
-        let sql1 = "SELECT COUNT(midx) cnt FROM mininglog WHERE useridx = '"+_userIdx+"'" ;
-        let result1 = await loadDB(sql1);
-        let _cnt = result1[0].cnt;
-        let _ing_sec = 0;
-        if(_cnt>0){
-            let sql2 = "SELECT TIMESTAMPDIFF(second, regdate, NOW()) AS sec FROM mininglog WHERE useridx='"+_userIdx+"' AND midx=(SELECT MAX(midx) FROM mininglog WHERE useridx='"+_userIdx+"')";
-            let result2 = await loadDB(sql2);
-            _ing_sec = result2[0].sec;
-        }
-        if(_ing_sec>86400){_ing_sec = 86400;}
-        
-        let sql5 = "SELECT COUNT(party_idx) party_cnt FROM party_member WHERE user_idx = '"+_userIdx+"'" ;
-        let result5 = await loadDB(sql5);
-        let _party_cnt = result5[0].party_cnt;
-        let _party_mem_cnt = 0;
-        if(_party_cnt>0){
-            let sql6 = "SELECT count(idx) party_mem_cnt FROM party_member WHERE party_idx=(SELECT party_idx FROM party_member WHERE user_idx='"+_userIdx+"')";
-            let result6 = await loadDB(sql6);
-            _party_mem_cnt = result6[0].party_mem_cnt;
-        }
-
-        let sql6 = "SELECT COUNT(userIdx) subsc_cnt FROM subscriptions WHERE userIdx = '"+_userIdx+"'" ;
-        let result6 = await loadDB(sql6);
-        let _subsc_cnt = result6[0].subsc_cnt;
-
-        res.render('mining', { email:_email , userIdx:_userIdx ,aah_balance:_aah_balance, party_mem_cnt:_party_mem_cnt, reffer_id:_reffer_id 
-            , reffer_cnt:_reffer_cnt, aah_address : _pub_key , aah_real_balance:_aah_real_balance, ing_sec:_ing_sec, user_add_addr:_user_add_addr
-            , VAPID_PUBLIC:publicVapidKey , subsc_cnt:_subsc_cnt});
-    }
-});
-
-*/
 
 app.get('/main', (req, res) => {
     res.render('main');
@@ -404,11 +361,11 @@ app.post('/login', async (req, res) => {
     let sql2 = "";
     if (_loginDailyYYYYMMDD == _curYYYYMMDD) {
         sql2 = `UPDATE users SET aah_real_balance='${_aah_real_balance}', 
-                loginCnt=loginCnt+1, logindate=now(), reqAAH_ingYN='N' 
+                loginCnt=loginCnt+1, exp=exp+1, logindate=now(), reqAAH_ingYN='N' 
                 WHERE userIdx='${result[0].userIdx}'`;
     } else {
         sql2 = `UPDATE users SET aah_real_balance='${_aah_real_balance}', 
-                loginCnt=loginCnt+1, loginDailyCnt=loginDailyCnt+1, 
+                loginCnt=loginCnt+1, exp=exp+1, loginDailyCnt=loginDailyCnt+1, 
                 logindate=now(), loginDailydate=now() 
                 WHERE userIdx='${result[0].userIdx}'`;
     }
@@ -440,57 +397,6 @@ app.use(async (req, res, next) => {
     }
     next();
 });
-
-/*
-app.post('/login', async (req, res) => {
-    let err_msg= "";
-    const { email, password } = req.body;
-    if (!email || !password) {
-        // return res.status(400).send('EMAIL과 비밀번호를 모두 입력해주세요.');
-        err_msg= err_msg +"EMAIL과 비밀번호를 모두 입력해주세요.";
-        res.render('error', { err_msg:err_msg});
-        return;
-    }
-    // email = jsfnRepSQLinj(email);
-    // password = jsfnRepSQLinj(password);
-    let sql = "SELECT *, DATE_FORMAT(loginDailydate, '%y%m%d') AS loginDailyYYYYMMDD, DATE_FORMAT(now(), '%y%m%d') AS curYYYYMMDD , IFNULL(user_add_addr, '') as user_new_addr FROM users WHERE email = '"+email+"'";
-    let result = await loadDB(sql);
-    // console.log(result[0].length +" : result[0].length");
-    if(result.length>0){
-        if(!(await bcrypt.compare(password, result[0].password))){
-            // return res.status(401).send('EMAIL 또는 비밀번호가 올바르지 않습니다.');
-            err_msg= err_msg +" EMAIL 또는 비밀번호가 올바르지 않습니다.";
-            res.render('error', { err_msg:err_msg});
-            return;
-        }
-    }else{
-        // console.log(result.length +" : result.length");
-        // return res.status(401).send('회원가입을 먼저 하세요.');
-        err_msg= err_msg +"회원가입을 먼저 하세요.";
-        res.render('error', { err_msg:err_msg});
-        return;
-    }
-    let search_addr = result[0].pub_key; 
-    if(result[0].user_new_addr.length>20){
-        search_addr=result[0].user_new_addr;
-    }
-    let _aah_real_balance = await getBalanceCEIK(search_addr);
-    req.session.email = email;
-    req.session.userIdx = result[0].userIdx;
-    let _loginDailyYYYYMMDD =  result[0].loginDailyYYYYMMDD;
-    let _curYYYYMMDD =  result[0].curYYYYMMDD;
-    // console.log(_loginDailyYYYYMMDD+" : _loginDailyYYYYMMDD");
-    let sql2 = " ";
-    if(_loginDailyYYYYMMDD==_curYYYYMMDD){
-        sql2 = sql2 + " update users set aah_real_balance='"+_aah_real_balance+"', loginCnt=loginCnt+1 , logindate=now(), reqAAH_ingYN='N' where userIdx='"+result[0].userIdx+"'";
-    }else{
-        sql2 = sql2 + " update users set aah_real_balance='"+_aah_real_balance+"', loginCnt=loginCnt+1 , loginDailyCnt=loginDailyCnt+1 , logindate=now(), loginDailydate=now() where userIdx='"+result[0].userIdx+"'";
-    }
-    try{ await saveDB(sql2); }catch(e){ }
-    // console.log(sql2);
-    res.redirect('/');
-});
-*/
 
 app.get('/signup', (req, res) => {
     res.render('signup');
@@ -956,12 +862,68 @@ app.post('/add_addrok', async (req, res) => {
     let userIdx = req.session.userIdx;
     var user_ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress || req.socket.remoteAddress || req.connection.socket.remoteAddress;
 
-    let sql2 = "update users set user_add_addr='"+_user_add_addr+"',last_ip='"+user_ip+"',last_reg=now() where userIdx='"+userIdx+"'";
+    let sql2 = "update users set user_add_addr='"+_user_add_addr+"', exp=exp+10, last_ip='"+user_ip+"',last_reg=now() where userIdx='"+userIdx+"'";
     await saveDB(sql2);
 
     res.redirect('/');
 });
 
+
+// 경험치 추가 및 레벨업 로직 업데이트
+app.post('/addExp', async (req, res) => {
+    const userIdx = req.body.userIdx;
+    const expToAdd = req.body.exp;
+
+    let getUserQuery = `SELECT level, exp FROM users WHERE userIdx = ${userIdx}`;
+    try {
+        let user = await loadDB(getUserQuery);
+
+        let newExp = user.exp + expToAdd;
+        let newLevel = user.level;
+
+        while (newExp >= newLevel * 1000) { // 예시: 레벨당 1000 경험치 필요
+            newExp -= newLevel * 1000;
+            newLevel += 1;
+        }
+
+        let updateUserQuery = `UPDATE users SET exp = ${newExp}, level = ${newLevel} WHERE userIdx = ${userIdx}`;
+        await saveDB(updateUserQuery);
+        
+        // res.send(`User ${userIdx} now has ${newExp} EXP and is level ${newLevel}`);
+        let _errAlert = "<script>alert('User "+userIdx+" now has "+newExp+" EXP and is level "+newLevel+" ');document.location.href='/';</script>";
+        res.send(_errAlert);
+        return;
+
+    } catch (err) {
+        console.error(err);
+        // res.status(500).send('Error updating user experience');
+        let _errAlert = "<script>alert('Error updating user experience : "+err+"');document.location.href='/';</script>";
+        res.send(_errAlert);
+    }
+    res.redirect('/');
+});
+
+// 부스터 활성화 로직
+app.post('/activateBooster', async (req, res) => {
+    const userIdx = req.body.userIdx;
+    const boosterId = req.body.boosterId;
+
+    let activateBoosterQuery = `UPDATE boosters SET active = TRUE WHERE id = ${boosterId} AND userIdx = ${userIdx}`;
+    try {
+        await saveDB(activateBoosterQuery);
+        // res.send(`Booster ${boosterId} activated for user ${userIdx}`);
+        let _errAlert = "<script>alert('Booster "+boosterId +" activated for user "+userIdx +"');document.location.href='/';</script>";
+        res.send(_errAlert);
+        return;
+    } catch (err) {
+        console.error(err);
+        // res.status(500).send('Error activating booster');
+        let _errAlert = "<script>alert('Error activating booster : "+err+"');document.location.href='/';</script>";
+        res.send(_errAlert);
+        return;
+    }
+    res.redirect('/');
+});
 
 // ######################### web push start #########################
 // VAPID 키 설정
