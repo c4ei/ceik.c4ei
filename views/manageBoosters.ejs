@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Manage Boosters</title>
+</head>
+<body>
+    <h1>Manage Boosters</h1>
+    
+    <h2>Add Booster</h2>
+    <form action="/addBooster" method="POST">
+        <input type="hidden" name="userIdx" value="<%= userIdx %>">
+        <input type="text" name="bname" placeholder="Booster Name" required>
+        <input type="number" name="multiplier" placeholder="Multiplier" step="0.1" required>
+        <input type="number" name="duration" placeholder="Duration (seconds)" required>
+        <button type="submit">Add Booster</button>
+    </form>
+
+    <h2>Existing Boosters</h2>
+    <ul>
+        <% boosters.forEach(booster => { %>
+            <li>
+                <%= booster.name %> (Multiplier: <%= booster.multiplier %>, Duration: <%= booster.duration %> seconds, Active: <%= booster.active %>)
+                <% if (!booster.active) { %>
+                    <form action="/activateBooster" method="POST" style="display: inline;">
+                        <input type="hidden" name="userIdx" value="<%= booster.userIdx %>">
+                        <input type="hidden" name="boosterId" value="<%= booster.id %>">
+                        <button type="submit">Activate</button>
+                    </form>
+                <% } else { %>
+                    <span>Active</span>
+                <% } %>
+            </li>
+        <% }) %>
+    </ul>
+
+    <a href="/">Back to Home</a>
+</body>
+</html>

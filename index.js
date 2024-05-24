@@ -870,38 +870,38 @@ app.post('/add_addrok', async (req, res) => {
 
 
 // 경험치 추가 및 레벨업 로직 업데이트
-app.post('/addExp', async (req, res) => {
-    const userIdx = req.body.userIdx;
-    const expToAdd = req.body.exp;
+// app.post('/addExp', async (req, res) => {
+//     const userIdx = req.body.userIdx;
+//     const expToAdd = req.body.exp;
 
-    let getUserQuery = `SELECT level, exp FROM users WHERE userIdx = ${userIdx}`;
-    try {
-        let user = await loadDB(getUserQuery);
+//     let getUserQuery = `SELECT level, exp FROM users WHERE userIdx = ${userIdx}`;
+//     try {
+//         let user = await loadDB(getUserQuery);
 
-        let newExp = user.exp + expToAdd;
-        let newLevel = user.level;
+//         let newExp = user.exp + expToAdd;
+//         let newLevel = user.level;
 
-        while (newExp >= newLevel * 1000) { // 예시: 레벨당 1000 경험치 필요
-            newExp -= newLevel * 1000;
-            newLevel += 1;
-        }
+//         while (newExp >= newLevel * 1000) { // 예시: 레벨당 1000 경험치 필요
+//             newExp -= newLevel * 1000;
+//             newLevel += 1;
+//         }
 
-        let updateUserQuery = `UPDATE users SET exp = ${newExp}, level = ${newLevel} WHERE userIdx = ${userIdx}`;
-        await saveDB(updateUserQuery);
+//         let updateUserQuery = `UPDATE users SET exp = ${newExp}, level = ${newLevel} WHERE userIdx = ${userIdx}`;
+//         await saveDB(updateUserQuery);
         
-        // res.send(`User ${userIdx} now has ${newExp} EXP and is level ${newLevel}`);
-        let _errAlert = "<script>alert('User "+userIdx+" now has "+newExp+" EXP and is level "+newLevel+" ');document.location.href='/';</script>";
-        res.send(_errAlert);
-        return;
+//         // res.send(`User ${userIdx} now has ${newExp} EXP and is level ${newLevel}`);
+//         let _errAlert = "<script>alert('User "+userIdx+" now has "+newExp+" EXP and is level "+newLevel+" ');document.location.href='/';</script>";
+//         res.send(_errAlert);
+//         return;
 
-    } catch (err) {
-        console.error(err);
-        // res.status(500).send('Error updating user experience');
-        let _errAlert = "<script>alert('Error updating user experience : "+err+"');document.location.href='/';</script>";
-        res.send(_errAlert);
-    }
-    res.redirect('/');
-});
+//     } catch (err) {
+//         console.error(err);
+//         // res.status(500).send('Error updating user experience');
+//         let _errAlert = "<script>alert('Error updating user experience : "+err+"');document.location.href='/';</script>";
+//         res.send(_errAlert);
+//     }
+//     res.redirect('/');
+// });
 
 // 부스터 활성화 로직
 app.post('/activateBooster', async (req, res) => {
@@ -911,19 +911,59 @@ app.post('/activateBooster', async (req, res) => {
     let activateBoosterQuery = `UPDATE boosters SET active = TRUE WHERE id = ${boosterId} AND userIdx = ${userIdx}`;
     try {
         await saveDB(activateBoosterQuery);
-        // res.send(`Booster ${boosterId} activated for user ${userIdx}`);
         let _errAlert = "<script>alert('Booster "+boosterId +" activated for user "+userIdx +"');document.location.href='/';</script>";
         res.send(_errAlert);
         return;
     } catch (err) {
         console.error(err);
-        // res.status(500).send('Error activating booster');
         let _errAlert = "<script>alert('Error activating booster : "+err+"');document.location.href='/';</script>";
         res.send(_errAlert);
         return;
     }
     res.redirect('/');
 });
+
+//2.1 부스터 상품 삽입 API
+app.post('/addBooster', async (req, res) => {
+    const { userIdx, bname, multiplier, duration } = req.body;
+
+    let insertBoosterQuery = `INSERT INTO boosters (userIdx, bname, multiplier, duration) VALUES (${userIdx}, '${bname}', ${multiplier}, ${duration})`;
+    try {
+        await saveDB(insertBoosterQuery);
+        let _errAlert = "<script>alert('Booster added successfully!');document.location.href='/manageBoosters';</script>";
+        res.send(_errAlert);
+        return;
+    } catch (err) {
+        console.error(err);
+        let _errAlert = "<script>alert('Error adding booster: " + err + "');document.location.href='/manageBoosters';</script>";
+        res.send(_errAlert);
+        return;
+    }
+});
+
+//2.2 부스터 상품 관리 페이지
+app.get('/manageBoosters', async (req, res) => {
+    if (!req.session.email) {
+        res.redirect('/login');
+    }
+    let _email = req.session.email;
+    let _userIdx = req.session.userIdx;
+    if(_userIdx!=40){
+        let _errAlert = "<script>alert('only use Admin');document.location.href='/';</script>";
+        res.send(_errAlert);
+        return;
+    }
+    // const userIdx = req.query.userIdx;
+    let getBoostersQuery = `SELECT * FROM boosters WHERE userIdx = ${_userIdx}`;
+    try {
+        let boosters = await loadDB(getBoostersQuery);
+        res.render('manageBoosters', { userIdx:_userIdx, boosters });
+    } catch (err) {
+        console.error(err);
+        res.status(500).send('Error loading boosters management page');
+    }
+});
+
 
 // ######################### web push start #########################
 // VAPID 키 설정

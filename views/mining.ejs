@@ -82,6 +82,7 @@
         #clock {
             font-size: 48px;
             color: #ccd366;
+            /* display: inline-block; */
         }
         .info {
             padding: 10px;
@@ -108,7 +109,7 @@
         .info:hover .tooltip {
             display: block;
         }
-    </style>
+        </style>
 </head>
 <body>
     <div class="container">
@@ -128,6 +129,7 @@
         <%if (bname!=""){ %><p><%= bname %> (Multiplier: <%= multiplier %>, Duration: <%= duration %> seconds)</p> <% } %>
         <button id="showMoreButton" onclick="jsfn_lyShow()">추가정보</button>
         <button id="subscribeButton">적립가능시 알리기</button>
+        <img src="/boost.png" alt="boost" border="0" width="32" height="32" style="vertical-align: bottom;">
         <div id="lyNoShow" style="display: none;">
             <p>내 Email 주소 : <%=email%></p>
             <p>내 CEIK 주소 : <br /> <span id="aah_address">
@@ -169,15 +171,6 @@
             <p>Mining Rate: <%= miningRate %> CEIK per <%= miningFrequency %> hours</p>
             <!-- <p>Time since last mining: <%= ing_sec %> seconds</p> -->
             <!-- miningSettingsForm DELETE -->
-<!-- 
-    CEIK 예치수량 10000000000 초과 Hash파워 증가 250
-    CEIK 예치수량 5000000000  초과 Hash파워 증가 150
-    CEIK 예치수량 2000000000  초과 Hash파워 증가  50
-    CEIK 예치수량 1000000000  초과 Hash파워 증가  20
-    CEIK 예치수량 500000000   초과 Hash파워 증가   5
-    CEIK 예치수량 100000000   초과 Hash파워 증가   2
-    CEIK 예치수량 0           초과 Hash파워 증가   1 
--->
         </div>
         
         <h1 id="MiningQty">0.0000000001</h1> 
@@ -188,7 +181,9 @@
         <input type="hidden" id="email" value="<%=email%>" />
         <input type="hidden" id="userIdx" value="<%=userIdx%>" />
         <br />※적립버튼은 2시간마다 클릭 가능합니다.
+
         <div id="clock">2:00:00</div>
+           
         <script>
         function startCountdown() {
             let _remainTime = "<%=ing_sec%>" ;
