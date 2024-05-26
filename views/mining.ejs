@@ -109,7 +109,7 @@
         .info:hover .tooltip {
             display: block;
         }
-        </style>
+    </style>
 </head>
 <body>
     <div class="container">
@@ -137,6 +137,7 @@
         
         <button id="showMoreButton" onclick="jsfn_lyShow()">추가정보</button>
         <button id="subscribeButton">적립가능시 알리기</button>
+        <button id="showgoRoultteButton" onclick="jsfn_goRoultte()">룰렛</button>
         <div id="lyNoShow" style="display: none;">
             <p>내 Email 주소 : <%=email%></p>
             <p>내 CEIK 주소 : <br /> <span id="aah_address">
@@ -192,6 +193,9 @@
         <div id="clock">2:00:00</div>
            
         <script>
+            function jsfn_goRoultte(){
+                document.location.href='/roulette';
+            }
         function startCountdown() {
             let _remainTime = "<%=ing_sec%>" ;
             var time = 7200; // 2 hours in seconds
@@ -228,6 +232,7 @@
         startCountdown();
         </script>
     </div>
+
     <script>
         function jsfn_useBoost(b_id, b_name){
             if(!confirm(b_name +" 부스터를 사용 하시겠습니까?")){
@@ -456,7 +461,6 @@
     <input type="hidden" id="m_email" name="m_email" />
     <input type="hidden" id="m_userIdx" name="m_userIdx" />
 </form>
-
 <form id="b_boost" name="b_boost" method="post">
     <input type="hidden" id="b_boosterId" name="b_boosterId" />
     <input type="hidden" id="b_email" name="b_email" />
