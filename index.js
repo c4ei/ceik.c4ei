@@ -1184,7 +1184,7 @@ app.get('/roulette', async (req, res) => {
 async function jsfn_create_lad_game(){
     // let currentGame = await loadDB("SELECT count(game_id) cnt FROM lad_game WHERE game_time >= NOW() - INTERVAL 6 MINUTE ORDER BY game_time DESC LIMIT 1");
     let currentGame = await loadDB("SELECT game_id, game_time, TIMESTAMPDIFF(SECOND, regdate, NOW()) AS diffSec FROM lad_game WHERE game_id = (SELECT MAX(game_id) FROM lad_game)");
-    if(currentGame[0].diffSec>3600){
+    if(currentGame[0].diffSec>360){
         // const newGameTime = new Date(Date.now() + 5 * 60 * 1000); // 5분 후 종료되는 새로운 게임
         const str_sql = "INSERT INTO lad_game (game_time) SELECT DATE_ADD(NOW(), INTERVAL 6 MINUTE) AS game_time FROM DUAL ";
         try{
@@ -1224,7 +1224,7 @@ app.get('/ladder', async (req, res) => {
     let _cur_game_id = currentGame[0].game_id;
     let previousGameResult = null;
     let showPreviousResult = false;
-    if(currentGame[0].diffSec>3600){
+    if(currentGame[0].diffSec>360){
         jsfn_create_lad_game();
         let _errAlert = "<script>alert('진행 되는 게임이 없어 새 게임이 추가 되었습니다.');document.location.href='/ladder';</script>";
         // console.log(_errAlert);
@@ -1328,6 +1328,25 @@ app.post('/ladder/bet', async (req, res) => {
     res.redirect('/ladder');
 });
 
+app.get('/ladderend', async (req, res) => {
+    if (!req.session.email) {
+        res.redirect('/login');
+        return;
+    }
+    // let userIdx = req.session.userIdx;
+    const game_id = req.query.game_id;
+    try{
+        const currentGame = await loadDB("SELECT IFNULL(result,'X') AS result FROM lad_game WHERE game_id='"+game_id+"'");
+        if (currentGame[0].result!='X') {
+            res.redirect('/ladder');
+            return;
+        }
+    }catch(e){
+        
+    }
+    jsfn_ladder_save(req,game_id);
+    res.redirect('/ladder');
+});
 
 async function jsfn_ladder_save(req, game_id){
     if(game_id==""){ return; }
@@ -1345,6 +1364,7 @@ async function jsfn_ladder_save(req, game_id){
     }
 
     await saveDB(`UPDATE lad_game SET result = '${result}' WHERE game_id = ${game_id}`);
+    await saveDB(`UPDATE lad_bet SET result = '${result}' , amount='0.00', win_amount='0.00' WHERE game_id = ${game_id} AND bet_choice != '${result}'` );
 
     const winningBets = await loadDB(`SELECT userIdx, bet_amount FROM lad_bet WHERE game_id = ${game_id} AND bet_choice = '${result}'`);
     const losingBets = await loadDB(`SELECT SUM(bet_amount) AS total FROM lad_bet WHERE game_id = ${game_id} AND bet_choice != '${result}'`);
@@ -1367,7 +1387,7 @@ async function jsfn_ladder_save(req, game_id){
                 console.error(e);
             }
         }
-
+        /*
         for (let bet of losingBets) {
             const loseAmount = parseFloat(bet.bet_amount);
             await saveDB("UPDATE users SET aah_balance = CAST(aah_balance AS DECIMAL(22,8)) - CAST('"+loseAmount+"' AS DECIMAL(22,8)) WHERE userIdx = '"+bet.userIdx+"'");
@@ -1380,8 +1400,8 @@ async function jsfn_ladder_save(req, game_id){
                 console.error(e);
             }
         }
+        */
     }
-    // }
 }
 
 // ######################### ladder end #########################

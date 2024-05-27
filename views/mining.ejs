@@ -136,8 +136,9 @@
         </div>
         
         <button id="showMoreButton" onclick="jsfn_lyShow()">추가정보</button>
-        <button id="subscribeButton">적립가능시 알리기</button>
+        <button id="subscribeButton">PUSH알림</button>
         <button id="showgoRoultteButton" onclick="jsfn_goRoultte()">룰렛</button>
+        <button id="showgoLadderButton" onclick="jsfn_goLadder()">사다리</button>
         <div id="lyNoShow" style="display: none;">
             <p>내 Email 주소 : <%=email%></p>
             <p>내 CEIK 주소 : <br /> <span id="aah_address">
@@ -196,40 +197,43 @@
             function jsfn_goRoultte(){
                 document.location.href='/roulette';
             }
-        function startCountdown() {
-            let _remainTime = "<%=ing_sec%>" ;
-            var time = 7200; // 2 hours in seconds
-            if(_remainTime>7200){
-                time = 0;
-            }else{
-                time = time - _remainTime;
+            function jsfn_goLadder(){
+                document.location.href='/ladder';
             }
-            var clock = document.getElementById('clock');
+            function startCountdown() {
+                let _remainTime = "<%=ing_sec%>" ;
+                var time = 7200; // 2 hours in seconds
+                if(_remainTime>7200){
+                    time = 0;
+                }else{
+                    time = time - _remainTime;
+                }
+                var clock = document.getElementById('clock');
 
-            var countdown = setInterval(function() {
-            var hours = Math.floor(time / 3600);
-            var minutes = Math.floor((time % 3600) / 60);
-            var seconds = time % 60;
+                var countdown = setInterval(function() {
+                var hours = Math.floor(time / 3600);
+                var minutes = Math.floor((time % 3600) / 60);
+                var seconds = time % 60;
 
-            // Add leading zeros if necessary
-            hours = (hours < 10) ? "0" + hours : hours;
-            minutes = (minutes < 10) ? "0" + minutes : minutes;
-            seconds = (seconds < 10) ? "0" + seconds : seconds;
+                // Add leading zeros if necessary
+                hours = (hours < 10) ? "0" + hours : hours;
+                minutes = (minutes < 10) ? "0" + minutes : minutes;
+                seconds = (seconds < 10) ? "0" + seconds : seconds;
 
-            // Display the countdown
-            clock.textContent = hours + ":" + minutes + ":" + seconds;
+                // Display the countdown
+                clock.textContent = hours + ":" + minutes + ":" + seconds;
 
-            // Check if the countdown is finished
-            if (time <= 0) {
-                clearInterval(countdown);
-                clock.textContent = "00:00:00";
-            } else {
-                time--;
+                // Check if the countdown is finished
+                if (time <= 0) {
+                    clearInterval(countdown);
+                    clock.textContent = "00:00:00";
+                } else {
+                    time--;
+                }
+                }, 1000); // Update every second
             }
-            }, 1000); // Update every second
-        }
 
-        startCountdown();
+            startCountdown();
         </script>
     </div>
 
@@ -268,9 +272,9 @@
         let _subsc_cnt = "<%=subsc_cnt%>";
         if(_subsc_cnt>0){
             subscribeButton.disabled=true;
-            subscribeButton.textContent="적립가능시 알리기 ON";
+            subscribeButton.textContent="알림ON";
         }else{
-            subscribeButton.textContent="적립가능시 알리기 OFF";
+            subscribeButton.textContent="알림OFF";
         }
         let _serverSpendTime = "<%=ing_sec%>" ; // 
         let _serverPlusTime = _serverSpendTime * <%=Qty_CeikPerSec%>;  // 0.0000000001

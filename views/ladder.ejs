@@ -82,7 +82,10 @@
 </head>
 <body>
     <div class="container">
-        <h1>사다리 게임-<%=cur_game_id%></h1>
+        <a href="/">HOME</a> 
+        <!-- / <a href="/ladderlist">사다리 게임결과</a>  -->
+        <br>
+        <h1>사다리 게임-<%=cur_game_id%>차</h1>
         <div id="timer">남은 시간: <span id="timeRemaining"></span></div>
         <% if (gameResult) { %>
             <div class="result-message">
@@ -97,16 +100,16 @@
             <form id="bettingForm" action="/ladder/bet" method="POST">
                 <input type="hidden" name="userIdx" value="<%= userIdx %>">
                 <div class="betting-section">
-                    전송가능 CEIK 수량 : <%=aah_balance%> <br />
+                    전송가능 CEIK 수량 : <span id="accumulatedCount"><%=aah_balance%></span> <br />
                     <label for="bet_amount">베팅 금액: </label>
                     <input type="number" id="bet_amount" name="bet_amount" min="1" required>
                 </div>
-                <div class="betting-section">
+                <div class="betting-section" id="ly_bet_btn">
                     <button type="button" id="highButton" class="betting-button high">높음</button>
                     <button type="button" id="lowButton" class="betting-button low">낮음</button>
+                    <input type="hidden" id="bet_choice" name="bet_choice">
+                    <button type="submit" id="betSubmit" class="betting-button" disabled>베팅</button>
                 </div>
-                <input type="hidden" id="bet_choice" name="bet_choice">
-                <button type="submit" id="betSubmit" class="betting-button" disabled>베팅</button>
             </form>
         <% } %>
         <p id="message"></p>
@@ -125,7 +128,9 @@
                 <span>낮음: <%= lowPercent %>%</span>
             </div>
         </div>
-        <% if (userBets && userBets.length > 0) { %>
+        <% if (userBets && userBets.length > 0) { 
+            let loopCnt=0;
+            %>
             <div class="bet-history">
                 <h3>나의 베팅 내역</h3>
                 <table>
@@ -137,9 +142,16 @@
                         <th>당첨금액</th>
                         <th>베팅 시간</th>
                     </tr>
-                    <% userBets.forEach(function(bet) { %>
+                    <% userBets.forEach(function(bet) { 
+                        loopCnt++;
+                        %>
                         <tr>
-                            <td><%= bet.game_id %></td>
+                            <td>
+                                <% if (bet.result==null&&loopCnt!=1){  %><a href="/ladderend?game_id="><%= bet.game_id %></a>
+                                <% } else { %>
+                                <%= bet.game_id %>
+                                <% } %>
+                            </td>
                             <td><%= bet.bet_choice %></td>
                             <td><%= bet.bet_amount %></td>
                             <td><%= bet.result %></td>
@@ -178,6 +190,18 @@
         });
 
         function handleBetChoice(choice, highButton, lowButton, betChoiceInput, betSubmit, message) {
+            let _ceik_qty = document.getElementById('accumulatedCount').innerText;
+            let _bet_amount = document.getElementById('bet_amount').value;
+            if(_bet_amount==""){
+                alert('베팅할 수량을 입력하세요');
+                document.getElementById('bet_amount').focus();
+                return;
+            }
+            // alert(_ceik_qty+":_ceik_qty\n"+_bet_amount+":_bet_amount");
+            if(parseFloat(_ceik_qty) < parseFloat(bet_amount)){
+                alert('베팅할 수있는 CEIK 가 적습니다.');
+                return;
+            }
             betChoiceInput.value = choice;
             highButton.classList.add('disabled');
             lowButton.classList.add('disabled');
@@ -194,38 +218,17 @@
                 const minutes = Math.floor(timeRemaining / 1000 / 60);
                 const seconds = Math.floor((timeRemaining / 1000) % 60);
                 timerElement.textContent = `${minutes}분 ${seconds}초`;
+                document.getElementById('message').innerText = '게임 중 입니다. 베팅이 가능 합니다.';
+                document.getElementById('ly_bet_btn').style.display = 'block';
             } else {
                 timerElement.textContent = '게임 종료';
-                setTimeout(() => {
-                    location.reload();
-                }, 60000); // 1 minute
+                document.getElementById('message').innerText = '다음 게임 준비 중입니다.(5분 게임 1분 휴식)';
+                document.getElementById('ly_bet_btn').style.display = 'none';
+                setTimeout(() => { location.href='/ladderend?game_id=<%=cur_game_id%>'; }, 10*1000); // 10 Sec
+                // setTimeout(() => { location.reload(); }, 60000); // 1 minute
             }
         }
     </script>
-    <script>
-        function updatePage() {
-            const now = new Date();
-            const endTime = new Date('<%= endTime %>');
-            const isPreparing = <%= isPreparing %>;
-
-            if (isPreparing) {
-                document.getElementById('message').innerText = '게임 준비 중입니다';
-                document.getElementById('bet_form').style.display = 'none';
-            } else {
-                document.getElementById('message').innerText = '';
-                document.getElementById('bet_form').style.display = 'block';
-            }
-
-            const timeDiff = endTime - now;
-            if (timeDiff > 0) {
-                setTimeout(updatePage, 1000);
-            } else {
-                document.getElementById('message').innerText = '게임 종료';
-                document.getElementById('game_result').style.display = 'block';
-            }
-        }
-
-        window.onload = updatePage;
-    </script>
+   
 </body>
 </html>
