@@ -52,10 +52,11 @@ const getConn = async() => {
 }
 async function loadDB(strSQL){
     const connection = await getConn();
-    let rows = await connection.query(strSQL);
+    let [rows] = await connection.query(strSQL);
     // console.log(strSQL);
     connection.release();
-    return rows[0];
+    // return rows[0];
+    return rows;
     // loadDB 함수 호출
     // loadDB(strSQL)
     // .then(result => {
@@ -64,6 +65,7 @@ async function loadDB(strSQL){
     // .catch(err => {
     //     console.error(err); // 오류 처리
     // });
+    
 }
 
 async function saveDB(strSQL){
@@ -1177,6 +1179,212 @@ app.get('/roulette', async (req, res) => {
 });
 
 // ######################### roulette end #########################
+
+// ######################### ladder start #########################
+async function jsfn_create_lad_game(){
+    // let currentGame = await loadDB("SELECT count(game_id) cnt FROM lad_game WHERE game_time >= NOW() - INTERVAL 6 MINUTE ORDER BY game_time DESC LIMIT 1");
+    let currentGame = await loadDB("SELECT game_id, game_time, TIMESTAMPDIFF(SECOND, regdate, NOW()) AS diffSec FROM lad_game WHERE game_id = (SELECT MAX(game_id) FROM lad_game)");
+    if(currentGame[0].diffSec>3600){
+        // const newGameTime = new Date(Date.now() + 5 * 60 * 1000); // 5분 후 종료되는 새로운 게임
+        const str_sql = "INSERT INTO lad_game (game_time) SELECT DATE_ADD(NOW(), INTERVAL 6 MINUTE) AS game_time FROM DUAL ";
+        try{
+            await saveDB(str_sql);
+            jsfn_ladder_save(req , currentGame[0].game_id); // 이전게임을 정산한다
+        }catch(e){
+            console.log("jsfn_create_lad_game\n"+str_sql);
+        }
+        console.log("#### NEW lad_game create - "+getCurTimestamp() +"####");
+    }else{
+        console.log(currentGame[0].diffSec+"초로 진행 중인 게임이 있어 게임 생성 불가능 - jsfn_create_lad_game" );
+    }
+}
+
+jsfn_create_lad_game(); // Server start!!!!
+
+// 6분마다 lad_game
+cron.schedule('*/6 * * * *', async () => {
+    console.log('6분마다 lad_game create - '+getCurTimestamp());
+    try {
+        jsfn_create_lad_game();
+    } catch (error) {
+        console.error('jsfn_create_lad_game Error querying database:', error);
+    }
+});
+
+app.get('/ladder', async (req, res) => {
+    if (!req.session.email) {
+        res.redirect('/login');
+        return;
+    }
+    const userIdx = req.session.userIdx; // from session 
+
+    // 현재 게임을 찾는다.
+    // let currentGame = await loadDB("SELECT game_id, game_time FROM lad_game WHERE game_time >= NOW() - INTERVAL 6 MINUTE ORDER BY game_time DESC LIMIT 1");
+    let currentGame = await loadDB("SELECT game_id, game_time, TIMESTAMPDIFF(SECOND, regdate, NOW()) AS diffSec FROM lad_game WHERE game_id = (SELECT MAX(game_id) FROM lad_game)");
+    let _cur_game_id = currentGame[0].game_id;
+    let previousGameResult = null;
+    let showPreviousResult = false;
+    if(currentGame[0].diffSec>3600){
+        jsfn_create_lad_game();
+        let _errAlert = "<script>alert('진행 되는 게임이 없어 새 게임이 추가 되었습니다.');document.location.href='/ladder';</script>";
+        // console.log(_errAlert);
+        res.send(_errAlert);
+        return;
+    }
+
+    const currentTime = new Date();
+    const endTime = new Date(currentGame[0].game_time);
+    const timeDifference = (currentTime - endTime) / 1000; // 시간 차이를 초 단위로 계산
+    // console.log( timeDifference + " : timeDifference / " + endTime +" : endTime 1238 Line");
+    if (timeDifference >= 0 && timeDifference <= 60) {
+        showPreviousResult = true;
+        previousGameResult = await loadDB("SELECT result, bet_amount, win_amount FROM lad_bet WHERE game_id ='"+_cur_game_id+"' ");
+    }
+
+    let highPercent = 50;
+    let lowPercent = 50;
+    let gameResult = null;
+    let userBets = [];
+    let userResult = null;
+    let userWinningRate = 0;
+    let userCEIKGain = 0;
+    let userPercentGain = 0;
+
+    let isPreparing = false;
+    const remainingTime = endTime - new Date();
+    isPreparing = remainingTime > 5 * 60 * 1000;
+
+    if (!isPreparing && !showPreviousResult) {
+        try {
+            const bets = await loadDB("SELECT bet_choice, COUNT(*) AS count FROM lad_bet WHERE game_id='"+_cur_game_id+"' GROUP BY bet_choice");
+            const totalBets = bets.reduce((acc, bet) => acc + bet.count, 0);
+            if (totalBets > 0) {
+                highPercent = (bets.find(bet => bet.bet_choice === 'high')?.count || 0) / totalBets * 100;
+                lowPercent = (bets.find(bet => bet.bet_choice === 'low')?.count || 0) / totalBets * 100;
+            }
+
+            const userBetResult = await loadDB("SELECT result, amount, win_amount FROM lad_bet WHERE game_id='"+_cur_game_id+"' AND userIdx='"+userIdx+"'");
+            if (userBetResult.length > 0) {
+                userResult = userBetResult[0].result;
+                userCEIKGain = userBetResult[0].win_amount;
+                userPercentGain = userResult ? (userCEIKGain / userBetResult[0].amount) * 100 : -100;
+            }
+        } catch (error) {
+            console.error("Error executing query: ", error.sql);
+            console.error("Error message: ", error.message);
+        }
+    }
+
+    let _aah_balance="0";
+    let sql = "SELECT aah_balance FROM users WHERE userIdx='"+userIdx+"'";
+    let result = await loadDB(sql);
+    if(result.length>0){
+        _aah_balance = result[0].aah_balance;
+    }
+    // console.log([userIdx] +" : [userIdx] 1253");
+    userBets = await loadDB("SELECT game_id, bet_choice, bet_amount, regdate , DATE_FORMAT(regdate, '%Y-%m-%d %H:%i:%s') AS YYMMDD ,result,win_amount FROM lad_bet WHERE userIdx='"+userIdx+"'  ORDER BY regdate DESC LIMIT 30 ");
+
+    res.render('ladder', {
+        userIdx,
+        "cur_game_id":_cur_game_id,
+        "aah_balance":_aah_balance,
+        endTime: endTime.toISOString(),
+        isPreparing,
+        highPercent,
+        lowPercent,
+        gameResult,
+        userResult,
+        userWinningRate,
+        userCEIKGain,
+        userPercentGain,
+        userBets,
+        showPreviousResult,
+        previousGameResult
+    });
+});
+
+app.post('/ladder/bet', async (req, res) => {
+    if (!req.session.email) {
+        res.redirect('/login');
+        return;
+    }
+    let s_userIdx = req.session.userIdx;  // 
+    const { userIdx, bet_amount, bet_choice } = req.body;
+    if (!bet_amount || !bet_choice) {
+        res.redirect('/ladder');
+        return;
+    }
+    const currentGame = await loadDB("SELECT game_id FROM lad_game WHERE game_time >= NOW() - INTERVAL 6 MINUTE ORDER BY game_time DESC LIMIT 1");
+    if (currentGame.length === 0) {
+        res.redirect('/ladder');
+        return;
+    }
+    let _cur_game_id = currentGame[0].game_id;
+    let user_ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress || req.socket.remoteAddress || req.connection.socket.remoteAddress;
+    await saveDB("INSERT INTO lad_bet (userIdx, game_id, bet_amount, bet_choice) VALUES ('"+s_userIdx+"', '"+_cur_game_id+"', '"+bet_amount+"', '"+bet_choice+"')");
+    await saveDB("UPDATE users SET aah_balance = CAST(aah_balance AS DECIMAL(22,8)) - CAST('"+bet_amount+"' AS DECIMAL(22,8)) WHERE userIdx = '"+s_userIdx+"'");
+    const _memo = `사다리 ${bet_amount} 베팅`;
+    const sql2 = `INSERT INTO mininglog (userIdx, aah_balance, regdate, regip, memo) VALUES ('${s_userIdx}', '${bet_amount}', NOW(), '${user_ip}', '${_memo}')`;
+    res.redirect('/ladder');
+});
+
+
+async function jsfn_ladder_save(req, game_id){
+    if(game_id==""){ return; }
+    var user_ip = "";
+    try{ 
+        user_ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress || req.socket.remoteAddress || req.connection.socket.remoteAddress;
+    }catch(e){
+
+    }
+    // const game_id = previousGame[0].game_id;
+    const bets = await loadDB(`SELECT bet_choice, SUM(bet_amount) AS total FROM lad_bet WHERE game_id = ${game_id} GROUP BY bet_choice`);
+    let result = 'high';
+    if (bets.length == 2 && bets[1].total > bets[0].total) {
+        result = 'low';
+    }
+
+    await saveDB(`UPDATE lad_game SET result = '${result}' WHERE game_id = ${game_id}`);
+
+    const winningBets = await loadDB(`SELECT userIdx, bet_amount FROM lad_bet WHERE game_id = ${game_id} AND bet_choice = '${result}'`);
+    const losingBets = await loadDB(`SELECT SUM(bet_amount) AS total FROM lad_bet WHERE game_id = ${game_id} AND bet_choice != '${result}'`);
+
+    if (winningBets.length > 0 && losingBets.length > 0) {
+        const totalLosingAmount = losingBets[0].total;
+        const fee = totalLosingAmount * 0.10;
+        const distributionAmount = totalLosingAmount - fee;
+        const totalWinningAmount = winningBets.reduce((sum, bet) => sum + parseFloat(bet.bet_amount), 0);
+
+        for (let bet of winningBets) {
+            const winAmount = (parseFloat(bet.bet_amount) / totalWinningAmount) * distributionAmount;
+            await saveDB("UPDATE users SET aah_balance = CAST(aah_balance AS DECIMAL(22,8)) + CAST('"+winAmount+"' AS DECIMAL(22,8)) WHERE userIdx = '"+bet.userIdx+"'");
+            
+            const _memo = `사다리 - 승 - ${winAmount}`;
+            const sql2 = `INSERT INTO mininglog (userIdx, aah_balance, regdate, regip, memo) VALUES ('${bet.userIdx}', '${winAmount}', DATE_SUB(NOW(), INTERVAL 7205 SECOND), '${user_ip}', '${_memo}')`;
+            try {
+                await saveDB(sql2);
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        for (let bet of losingBets) {
+            const loseAmount = parseFloat(bet.bet_amount);
+            await saveDB("UPDATE users SET aah_balance = CAST(aah_balance AS DECIMAL(22,8)) - CAST('"+loseAmount+"' AS DECIMAL(22,8)) WHERE userIdx = '"+bet.userIdx+"'");
+            
+            const _memo = `사다리 - 패 - ${loseAmount}`;
+            const sql2 = `INSERT INTO mininglog (userIdx, aah_balance, regdate, regip, memo) VALUES ('${bet.userIdx}', '${-loseAmount}', DATE_SUB(NOW(), INTERVAL 7205 SECOND), '${user_ip}', '${_memo}')`;
+            try {
+                await saveDB(sql2);
+            } catch (e) {
+                console.error(e);
+            }
+        }
+    }
+    // }
+}
+
+// ######################### ladder end #########################
 
 // ######################### web push start #########################
 // VAPID 키 설정

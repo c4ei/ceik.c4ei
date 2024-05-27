@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>사다리 게임</title>
+    <style>
+        .container {
+            width: 60%;
+            margin: 0 auto;
+            text-align: center;
+        }
+        .betting-section {
+            margin: 20px 0;
+        }
+        .betting-button {
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        .high {
+            background-color: #4CAF50;
+            color: white;
+        }
+        .low {
+            background-color: #f44336;
+            color: white;
+        }
+        .disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+        .bar-container {
+            margin-top: 20px;
+            position: relative;
+            height: 30px;
+            background-color: #ddd;
+            display: flex;
+        }
+        .bar {
+            height: 100%;
+            display: flex;
+        }
+        .high-bar {
+            background-color: #4CAF50;
+            text-align: center;
+            line-height: 30px;
+        }
+        .low-bar {
+            background-color: #f44336;
+            text-align: center;
+            line-height: 30px;
+        }
+        .bar-text {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            position: absolute;
+            top: 0;
+            padding: 5px;
+            box-sizing: border-box;
+            color: #fff;
+        }
+        .bet-history {
+            margin-top: 20px;
+            text-align: left;
+        }
+        .bet-history table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .bet-history th, .bet-history td {
+            border: 1px solid #ddd;
+            padding: 8px;
+        }
+        .bet-history th {
+            background-color: #f2f2f2;
+        }
+        .result-message {
+            margin-top: 20px;
+            font-size: 18px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>사다리 게임-<%=cur_game_id%></h1>
+        <div id="timer">남은 시간: <span id="timeRemaining"></span></div>
+        <% if (gameResult) { %>
+            <div class="result-message">
+                <p>게임 결과: <%= gameResult %></p>
+                <% if (userResult > 0) { %>
+                    <p>축하합니다! 당신은 <%= userResult %> CEIK을 얻었습니다.</p>
+                <% } else { %>
+                    <p>아쉽습니다. 당신은 베팅에서 패배했습니다.</p>
+                <% } %>
+            </div>
+        <% } else { %>
+            <form id="bettingForm" action="/ladder/bet" method="POST">
+                <input type="hidden" name="userIdx" value="<%= userIdx %>">
+                <div class="betting-section">
+                    전송가능 CEIK 수량 : <%=aah_balance%> <br />
+                    <label for="bet_amount">베팅 금액: </label>
+                    <input type="number" id="bet_amount" name="bet_amount" min="1" required>
+                </div>
+                <div class="betting-section">
+                    <button type="button" id="highButton" class="betting-button high">높음</button>
+                    <button type="button" id="lowButton" class="betting-button low">낮음</button>
+                </div>
+                <input type="hidden" id="bet_choice" name="bet_choice">
+                <button type="submit" id="betSubmit" class="betting-button" disabled>베팅</button>
+            </form>
+        <% } %>
+        <p id="message"></p>
+        <div id="game_result" style="display:none;">
+            <p>현재 게임 결과: <%= gameResult %></p>
+            <p>내 베팅 결과: <%= userResult %></p>
+            <p>내 승률: <%= userWinningRate %>%</p>
+            <p>얻은 CEIK: <%= userCEIKGain %></p>
+            <p>원금 대비 증가율: <%= userPercentGain %>%</p>
+        </div>
+        <div class="bar-container">
+            <div id="highBar" class="bar high-bar" style="width: <%= highPercent %>%"></div>
+            <div id="lowBar" class="bar low-bar" style="width: <%= lowPercent %>%"></div>
+            <div class="bar-text">
+                <span>높음: <%= highPercent %>%</span>
+                <span>낮음: <%= lowPercent %>%</span>
+            </div>
+        </div>
+        <% if (userBets && userBets.length > 0) { %>
+            <div class="bet-history">
+                <h3>나의 베팅 내역</h3>
+                <table>
+                    <tr>
+                        <th>게임번호</th>
+                        <th>베팅 선택</th>
+                        <th>베팅 금액 (CEIK)</th>
+                        <th>결과</th>
+                        <th>당첨금액</th>
+                        <th>베팅 시간</th>
+                    </tr>
+                    <% userBets.forEach(function(bet) { %>
+                        <tr>
+                            <td><%= bet.game_id %></td>
+                            <td><%= bet.bet_choice %></td>
+                            <td><%= bet.bet_amount %></td>
+                            <td><%= bet.result %></td>
+                            <td><%= bet.win_amount %></td>
+                            <td><%= bet.YYMMDD %></td>
+                        </tr>
+                    <% }) %>
+                </table>
+            </div>
+        <% } %>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const highButton = document.getElementById('highButton');
+            const lowButton = document.getElementById('lowButton');
+            const betSubmit = document.getElementById('betSubmit');
+            const betChoiceInput = document.getElementById('bet_choice');
+            const message = document.getElementById('message');
+
+            if (highButton && lowButton && betChoiceInput && betSubmit) {
+                highButton.addEventListener('click', function() {
+                    handleBetChoice('high', highButton, lowButton, betChoiceInput, betSubmit, message);
+                });
+
+                lowButton.addEventListener('click', function() {
+                    handleBetChoice('low', highButton, lowButton, betChoiceInput, betSubmit, message);
+                });
+            }
+
+            // Initialize timer
+            const endTime = new Date('<%= endTime %>');
+            const timerElement = document.getElementById('timeRemaining');
+            updateTimer(timerElement, endTime);
+            setInterval(() => updateTimer(timerElement, endTime), 1000);
+        });
+
+        function handleBetChoice(choice, highButton, lowButton, betChoiceInput, betSubmit, message) {
+            betChoiceInput.value = choice;
+            highButton.classList.add('disabled');
+            lowButton.classList.add('disabled');
+            highButton.disabled = true;
+            lowButton.disabled = true;
+            betSubmit.disabled = false;
+            message.textContent = '선택 후 변경 할 수 없습니다.';
+        }
+
+        function updateTimer(timerElement, endTime) {
+            const now = new Date();
+            const timeRemaining = endTime - now;
+            if (timeRemaining >= 0) {
+                const minutes = Math.floor(timeRemaining / 1000 / 60);
+                const seconds = Math.floor((timeRemaining / 1000) % 60);
+                timerElement.textContent = `${minutes}분 ${seconds}초`;
+            } else {
+                timerElement.textContent = '게임 종료';
+                setTimeout(() => {
+                    location.reload();
+                }, 60000); // 1 minute
+            }
+        }
+    </script>
+    <script>
+        function updatePage() {
+            const now = new Date();
+            const endTime = new Date('<%= endTime %>');
+            const isPreparing = <%= isPreparing %>;
+
+            if (isPreparing) {
+                document.getElementById('message').innerText = '게임 준비 중입니다';
+                document.getElementById('bet_form').style.display = 'none';
+            } else {
+                document.getElementById('message').innerText = '';
+                document.getElementById('bet_form').style.display = 'block';
+            }
+
+            const timeDiff = endTime - now;
+            if (timeDiff > 0) {
+                setTimeout(updatePage, 1000);
+            } else {
+                document.getElementById('message').innerText = '게임 종료';
+                document.getElementById('game_result').style.display = 'block';
+            }
+        }
+
+        window.onload = updatePage;
+    </script>
+</body>
+</html>
