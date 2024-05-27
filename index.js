@@ -1027,15 +1027,131 @@ const ITEM_PROBABILITIES = {
 function getRandomItem(probabilities) {
     const random = Math.random();
     let cumulativeProbability = 0.0;
-  
+
     for (const [item, probability] of Object.entries(probabilities)) {
-      cumulativeProbability += probability;
-      if (random < cumulativeProbability) {
-        return item;
-      }
+        cumulativeProbability += probability;
+        if (random < cumulativeProbability) {
+            return item;
+        }
     }
     return 'Nothing';
 }
+
+app.post('/spinRoulette', async (req, res) => {
+    if (!req.session.email) {
+        res.redirect('/login');
+        return;
+    }
+
+    const userIdx = req.session.userIdx;
+    const freeSpin = req.body.freeSpin === true;
+
+    let getUserQuery = `SELECT point, aah_balance, last_spin, last_result FROM users WHERE userIdx = ${userIdx}`;
+    try {
+        let user = (await loadDB(getUserQuery))[0];
+        let now = new Date();
+        let lastSpinDate = new Date(user.last_spin);
+        let today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+        if (!freeSpin && user.point < 10) {
+            res.status(400).json({ error: 'Not enough points' });
+            return;
+        }
+
+        if (freeSpin && lastSpinDate >= today) {
+            res.status(400).json({ error: 'You have already used your free spin today' });
+            return;
+        }
+
+        // Adjusted probabilities based on win counts
+        let winCounts = await loadDB('SELECT item, win_count, last_reset FROM item_wins');
+        let winCountMap = {};
+        winCounts.forEach(row => {
+            winCountMap[row.item] = {
+                win_count: row.win_count,
+                last_reset: new Date(row.last_reset)
+            };
+        });
+
+        let probabilities = { ...ITEM_PROBABILITIES };
+        let totalSpins = winCounts.reduce((acc, row) => acc + row.win_count, 0);
+
+        const updateProbability = (item, maxWins, resetHours) => {
+            if (winCountMap[item]) {
+                let timeSinceLastReset = (now - winCountMap[item].last_reset) / (1000 * 60 * 60); // hours
+                if (timeSinceLastReset >= resetHours) {
+                    saveDB(`UPDATE item_wins SET win_count = 0, last_reset = NOW() WHERE item = '${item}'`);
+                    winCountMap[item].win_count = 0;
+                    winCountMap[item].last_reset = now;
+                }
+                if (winCountMap[item].win_count >= maxWins) {
+                    probabilities[item] = 0.0;
+                }
+            }
+        };
+
+        updateProbability('10 CEIK', 1, 24);
+        updateProbability('1 CEIK', 4, 6);
+        updateProbability('0.5 CEIK', 12, 2);
+
+        if (user.last_result === 'Spin Again') {
+            probabilities['Spin Again'] = 0.0;
+        }
+
+        let cumulativeProbability = 0;
+        let cumulativeProbabilities = {};
+        for (let item in probabilities) {
+            cumulativeProbability += probabilities[item];
+            cumulativeProbabilities[item] = cumulativeProbability;
+        }
+
+        let wonItem = getRandomItem(cumulativeProbabilities);
+
+        let updateQuery = '';
+        if (wonItem !== 'Nothing') {
+            let ceikAmount = 0;
+            switch (wonItem) {
+                case '0.1 CEIK': ceikAmount = 0.1; break;
+                case '0.5 CEIK': ceikAmount = 0.5; break;
+                case '1 CEIK': ceikAmount = 1; break;
+                case '10 CEIK': ceikAmount = 10; break;
+            }
+
+            if (ceikAmount > 0) {
+                updateQuery = `UPDATE users SET aah_balance = ROUND(aah_balance + ${ceikAmount}, 8) WHERE userIdx = ${userIdx}`;
+                await saveDB(updateQuery);
+            }
+
+            let itemWinCountUpdateQuery = `INSERT INTO item_wins (item, win_count, last_reset)
+                VALUES ('${wonItem}', 1, NOW())
+                ON DUPLICATE KEY UPDATE win_count = win_count + 1`;
+            await saveDB(itemWinCountUpdateQuery);
+        }
+
+        // 포인트 차감 로직을 조정하여 'Spin Again'인 경우에는 차감되지 않도록 함
+        if (!freeSpin && wonItem !== 'Spin Again') {
+            updateQuery = `UPDATE users SET point = point - 10 WHERE userIdx = ${userIdx}`;
+            await saveDB(updateQuery);
+        }
+
+        if (freeSpin) {
+            updateQuery = `UPDATE users SET last_spin = NOW() WHERE userIdx = ${userIdx}`;
+            await saveDB(updateQuery);
+        }
+
+        let updateLastResultQuery = `UPDATE users SET last_result = '${wonItem}' WHERE userIdx = ${userIdx}`;
+        await saveDB(updateLastResultQuery);
+
+        let logQuery = `INSERT INTO spin_logs (userIdx, item) VALUES (${userIdx}, '${wonItem}')`;
+        await saveDB(logQuery);
+
+        console.log(getCurTimestamp() + " / wonItem : " + wonItem + " ▶ " + req.session.email);
+        res.json({ result: wonItem });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Error spinning roulette' });
+    }
+});
 
 // GET /roulette
 app.get('/roulette', async (req, res) => {
@@ -1057,128 +1173,6 @@ app.get('/roulette', async (req, res) => {
     } catch (err) {
         console.error(err);
         res.status(500).send('Error loading roulette page');
-    }
-});
-
-app.post('/spinRoulette', async (req, res) => {
-    if (!req.session.email) {
-        res.redirect('/login');
-        return;
-    }
-
-    const userIdx = req.session.userIdx;
-    const freeSpin = req.body.freeSpin === 'true';
-
-    let getUserQuery = `SELECT POINT, aah_balance, last_spin, last_result FROM users WHERE userIdx = ${userIdx}`;
-    try {
-        let user = (await loadDB(getUserQuery))[0];
-        let now = new Date();
-        let lastSpinDate = new Date(user.last_spin);
-        let today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-
-        if (!freeSpin && user.POINT < 10) {
-            res.status(400).json({ error: 'Not enough points' });
-            return;
-        }
-
-        if (freeSpin && lastSpinDate >= today) {
-            res.status(400).json({ error: 'You have already used your free spin today' });
-            return;
-        }
-
-        // Get item win counts
-        let winCounts = await loadDB('SELECT item, win_count, last_reset FROM item_wins');
-        let winCountMap = {};
-        winCounts.forEach(row => {
-            winCountMap[row.item] = {
-                win_count: row.win_count,
-                last_reset: new Date(row.last_reset)
-            };
-        });
-
-        // Adjust probabilities based on win counts
-        let probabilities = { ...ITEM_PROBABILITIES };
-        let totalSpins = winCounts.reduce((acc, row) => acc + row.win_count, 0);
-
-        // Function to update probabilities
-        const updateProbability = (item, maxWins, resetHours) => {
-            if (winCountMap[item]) {
-                let timeSinceLastReset = (now - winCountMap[item].last_reset) / (1000 * 60 * 60); // hours
-                if (timeSinceLastReset >= resetHours) {
-                    // Reset win count and last reset time
-                    saveDB(`UPDATE item_wins SET win_count = 0, last_reset = NOW() WHERE item = '${item}'`);
-                    winCountMap[item].win_count = 0;
-                    winCountMap[item].last_reset = now;
-                }
-                if (winCountMap[item].win_count >= maxWins) {
-                    probabilities[item] = 0.0; // Remove item from probability pool if max wins reached
-                }
-            }
-        };
-
-        updateProbability('10 CEIK', 1, 24); // 1 per 24 hours
-        updateProbability('1 CEIK', 4, 6);  // 4 per 6 hours
-        updateProbability('0.5 CEIK', 12, 2);  // 12 per 2 hours
-
-        // Remove "Spin Again" if the last result was also "Spin Again"
-        if (user.last_result === 'Spin Again') {
-            probabilities['Spin Again'] = 0.0;
-        }
-
-        // Calculate cumulative probabilities
-        let cumulativeProbability = 0;
-        let cumulativeProbabilities = {};
-        for (let item in probabilities) {
-            cumulativeProbability += probabilities[item];
-            cumulativeProbabilities[item] = cumulativeProbability;
-        }
-
-        // Spin the roulette
-        let wonItem = getRandomItem(cumulativeProbabilities);
-
-        let updateQuery = '';
-        if (wonItem !== 'Nothing') {
-            let ceikAmount = 0;
-            switch (wonItem) {
-                case '0.1 CEIK': ceikAmount = 0.1; break;
-                case '0.5 CEIK': ceikAmount = 0.5; break;
-                case '1 CEIK': ceikAmount = 1; break;
-                case '10 CEIK': ceikAmount = 10; break;
-            }
-
-            if (ceikAmount > 0) {
-                updateQuery = `UPDATE users SET aah_balance = ROUND(aah_balance + ${ceikAmount}, 8) WHERE userIdx = ${userIdx}`;
-                await saveDB(updateQuery);
-            }
-
-            // Update item win count
-            let itemWinCountUpdateQuery = `INSERT INTO item_wins (item, win_count, last_reset)
-                VALUES ('${wonItem}', 1, NOW())
-                ON DUPLICATE KEY UPDATE win_count = win_count + 1`;
-            await saveDB(itemWinCountUpdateQuery);
-        }
-
-        if (!freeSpin) {
-            updateQuery = `UPDATE users SET POINT = POINT - 10 WHERE userIdx = ${userIdx}`;
-            await saveDB(updateQuery);
-        }
-
-        if (freeSpin) {
-            updateQuery = `UPDATE users SET last_spin = NOW() WHERE userIdx = ${userIdx}`;
-            await saveDB(updateQuery);
-        }
-
-        // Update last_result for the user
-        let updateLastResultQuery = `UPDATE users SET last_result = '${wonItem}' WHERE userIdx = ${userIdx}`;
-        await saveDB(updateLastResultQuery);
-
-        let logQuery = `INSERT INTO spin_logs (userIdx, item) VALUES (${userIdx}, '${wonItem}')`;
-        await saveDB(logQuery);
-        console.log(getCurTimestamp() +" / wonItem : "+ wonItem + " ▶ " + req.session.email);
-        res.json({ result: wonItem });
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ error: 'Error spinning roulette' });
     }
 });
 

@@ -61,7 +61,8 @@
         <p>User Email: <%= user.email %></p>
         <p>Points: <%= user.point %></p>
         <p>AAH Balance: <%= user.aah_balance %></p>
-
+        <!-- <p>아직 개발중이며 서버결과를 룰렛 화면에서 안맞는 <br/>부분 수정중입니다(__)ㅋ
+            (버그 수정시 이 문구 없어 집니다.)</p> -->
         <div class="roulette-container">
             <div class="roulette">
                 <img src="/roulette.png" id="rouletteImage" />
@@ -76,16 +77,18 @@
         document.getElementById('freeSpinButton').addEventListener('click', function() {
             spinRoulette(true);
         });
-
+    
         document.getElementById('pointSpinButton').addEventListener('click', function() {
             spinRoulette(false);
         });
-
+    
         function spinRoulette(isFreeSpin) {
             fetch('/spinRoulette', {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'application/json',
+                    'Cache-Control': 'no-cache',
+                    'Pragma': 'no-cache'
                 },
                 body: JSON.stringify({ freeSpin: isFreeSpin })
             })
@@ -95,32 +98,34 @@
                     alert(data.error);
                     return;
                 }
-                
+    
                 const result = data.result;
-                console.log("Result from server:", result); // 디버깅 로그 추가
-
+                console.log("Result from server:", result);
+    
                 const segmentAngles = {
-                    '0.1 CEIK': 300,      // 2시
-                    'Spin Again': 0,     // 12시
-                    'Nothing': 60,      // 10시
-                    '0.5 CEIK': 120,     // 4시
-                    '1 CEIK': 180,       // 6시
-                    '10 CEIK': 240       // 8시
+                    '0.1 CEIK': 300, // 2시
+                    'Spin Again': 0, // 12시
+                    'Nothing': 60, // 10시
+                    '0.5 CEIK': 120, // 4시
+                    '1 CEIK': 180, // 6시
+                    '10 CEIK': 240 // 8시
                 };
                 const angle = segmentAngles[result];
-                const totalAngle = angle + 720; // At least 2 full rotations
-
+                const totalAngle = angle + 720; // 최소 2회전
+    
                 const rouletteImage = document.getElementById('rouletteImage');
                 rouletteImage.style.transition = 'transform 4s ease-out';
                 rouletteImage.style.transform = `rotate(${totalAngle}deg)`;
-
+    
                 setTimeout(() => {
                     alert(`You won: ${result}`);
                     location.reload();
-                }, 4000); // Match this with the transition time
+                }, 4000); // 전환 시간과 일치시킴
             })
             .catch(error => console.error('Error:', error));
         }
     </script>
+   
+    
 </body>
 </html>
