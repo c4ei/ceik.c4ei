@@ -1303,23 +1303,44 @@ app.get('/ladder', async (req, res) => {
     });
 });
 
+async function jsfn_getDB_AAH(userIdx){
+    let _aah_balance="0";
+    let sql = "SELECT aah_balance FROM users WHERE userIdx='"+userIdx+"'";
+    let result = await loadDB(sql);
+    if(result.length>0){
+        _aah_balance = result[0].aah_balance;
+    }
+}
+
 app.post('/ladder/bet', async (req, res) => {
     if (!req.session.email) {
         res.redirect('/login');
         return;
     }
     let s_userIdx = req.session.userIdx;  // 
-    const { userIdx, bet_amount, bet_choice } = req.body;
-    if (!bet_amount || !bet_choice) {
+    const { userIdx, bet_amount, bet_choice, game_id } = req.body;
+    if (!bet_amount || !bet_choice || !game_id) {
         res.redirect('/ladder');
         return;
     }
-    const currentGame = await loadDB("SELECT game_id FROM lad_game WHERE game_time >= NOW() - INTERVAL 6 MINUTE ORDER BY game_time DESC LIMIT 1");
-    if (currentGame.length === 0) {
+    const currentGameDB = await loadDB("SELECT game_id FROM lad_game WHERE game_time >= NOW() - INTERVAL 6 MINUTE ORDER BY game_time DESC LIMIT 1");
+    if (currentGameDB.length === 0) {
         res.redirect('/ladder');
         return;
     }
-    let _cur_game_id = currentGame[0].game_id;
+    let _cur_game_id = currentGameDB[0].game_id;
+    if(game_id!=_cur_game_id){
+        let _errAlert = "<script>alert('게임 회차가 다릅니다.\n이미 다른게임이 진행 중입니다.');document.location.href='/ladder';</script>";
+        res.send(_errAlert);
+        return;
+    }
+    let _ceik_qty = await jsfn_getDB_AAH(s_userIdx);
+    if (parseFloat(_ceik_qty) < bet_amount) {
+        let _errAlert = "<script>alert('베팅할 수있는 CEIK 가 적습니다.');document.location.href='/ladder';</script>";
+        res.send(_errAlert);
+        return;
+    }
+    
     let user_ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress || req.socket.remoteAddress || req.connection.socket.remoteAddress;
     await saveDB("INSERT INTO lad_bet (userIdx, game_id, bet_amount, bet_choice) VALUES ('"+s_userIdx+"', '"+_cur_game_id+"', '"+bet_amount+"', '"+bet_choice+"')");
     await saveDB("UPDATE users SET aah_balance = CAST(aah_balance AS DECIMAL(22,8)) - CAST('"+bet_amount+"' AS DECIMAL(22,8)) WHERE userIdx = '"+s_userIdx+"'");
