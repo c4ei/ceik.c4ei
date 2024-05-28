@@ -65,7 +65,6 @@ async function loadDB(strSQL){
     // .catch(err => {
     //     console.error(err); // 오류 처리
     // });
-    
 }
 
 async function saveDB(strSQL){
@@ -1412,7 +1411,7 @@ async function jsfn_ladder_save(req, game_id){
     try{ 
         user_ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress || req.socket.remoteAddress || req.connection.socket.remoteAddress;
     }catch(e){
-        console.log("Line 1402 - jsfn_ladder_save : " + e);
+        // console.log("Line 1415 - jsfn_ladder_save : " + e);
     }
     console.log("#################### Line 1404 jsfn_ladder_save #################### game_id : " + game_id + " / " + getCurTimestamp());
     // const game_id = previousGame[0].game_id;
@@ -1503,6 +1502,124 @@ app.get('/ladderList', async (req, res) => {
     });
 });
 // ######################### ladder end #########################
+
+// ######################### buyCeik KRW start #########################
+app.get('/buy', async (req, res) => {
+    if (!req.session.email) {
+        res.redirect('/login');
+        return;
+    }
+    const userIdx = req.session.userIdx; // from session 
+
+    res.render('buyceik_krw', {
+        userIdx: userIdx
+    });
+});
+
+app.post('/buy', async (req, res) => {
+    if (!req.session.email) {
+        res.redirect('/login');
+        return;
+    }
+    const user_email = req.session.userEmail; // 사용자 이메일을 세션에서 가져오는 예시
+    const s_userIdx = req.session.userIdx;
+    const user_ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress || req.socket.remoteAddress || req.connection.socket.remoteAddress;
+
+    const { username, amount, quantity } = req.body;
+
+    try {
+        // buylog 테이블에 임시 저장
+        const sql = "INSERT INTO buylog (userIdx, username, amount, quantity, regdate, regip) VALUES ('"+s_userIdx+"', '"+username+"', '"+amount+"', '"+quantity+"', NOW(), '"+user_ip+"')";
+        await saveDB(sql);
+
+        // 구매 완료 페이지 렌더링
+        res.render('buyceik_krw_ok', {
+            amount: amount,
+            quantity: quantity,
+            email: user_email
+        });
+    } catch (err) {
+        console.error(err);
+        res.status(500).send('서버 오류가 발생했습니다.');
+    }
+});
+
+// 구매 리스트 페이지
+app.get('/buylist', async (req, res) => {
+    if (!req.session.email) {
+        res.redirect('/login');
+        return;
+    }
+    const user_email = req.session.userEmail; // 사용자 이메일을 세션에서 가져오는 예시
+    const s_userIdx = req.session.userIdx;
+
+    const page = parseInt(req.query.page) || 1;
+    const limit = 20;
+    const offset = (page - 1) * limit;
+
+    try {
+        // 총 구매 로그 수
+        const totalLogsResult = await loadDB('SELECT COUNT(*) AS count FROM buylog');
+        const totalLogs = totalLogsResult[0].count;
+        const totalPages = Math.ceil(totalLogs / limit);
+
+        // 구매 로그 불러오기
+        const logs = await loadDB(`SELECT * FROM buylog LIMIT ${limit} OFFSET ${offset}`);
+
+        res.render('buyceik_list', {
+            logs: logs,
+            currentPage: page,
+            totalPages: totalPages
+        });
+    } catch (err) {
+        console.error(err);
+        res.status(500).send('서버 오류가 발생했습니다.');
+    }
+});
+
+// 구매 승인 API
+app.post('/approve', async (req, res) => {
+    if (!req.session.email) {
+        res.redirect('/login');
+        return;
+    }
+    const user_email = req.session.userEmail; // 사용자 이메일을 세션에서 가져오는 예시
+    const s_userIdx = req.session.userIdx;
+    if(!(s_userIdx==40||s_userIdx==52)){
+        let _errAlert = "<script>alert('관리자만 사용 가능 합니다.');document.location.href='/buylist';</script>";
+        res.send(_errAlert);
+        return;
+    }
+
+    const { logId } = req.body;
+    try {
+        // 구매 로그 가져오기
+        const logResult = await loadDB(`SELECT * FROM buylog WHERE id = ${logId}`);
+        if (!logResult.length) {
+            return res.status(404).json({ success: false, message: '구매 로그를 찾을 수 없습니다.' });
+        }
+
+        const log = logResult[0];
+        const { userIdx, amount, quantity } = log;
+
+        // 사용자 계정 업데이트
+        await saveDB(`UPDATE users SET aah_balance = CAST(aah_balance AS DECIMAL(22,8)) + CAST(${quantity} AS DECIMAL(22,8)) WHERE userIdx = '${userIdx}'`);
+
+        // mininglog 테이블에 기록
+        const _memo = `KRW 구매 ${quantity}`;
+        await saveDB(`INSERT INTO mininglog (userIdx, aah_balance, regdate, regip, memo) VALUES ('${userIdx}', '${quantity}', NOW(), '${req.ip}', '${_memo}')`);
+
+        // 승인된 로그를 buylog 테이블에서 상태 업데이트
+        await saveDB(`UPDATE buylog SET status = 'approved' WHERE id = ${logId}`);
+
+        res.json({ success: true });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ success: false, message: '서버 오류가 발생했습니다.' });
+    }
+});
+
+// ######################### buyCeik KRW end #########################
 
 // ######################### web push start #########################
 // VAPID 키 설정

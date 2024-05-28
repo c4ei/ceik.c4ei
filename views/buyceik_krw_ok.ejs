@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>구매 신청 완료</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f8f9fa;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        .card {
+            max-width: 600px;
+            margin: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <div class="card-body">
+            <a href="/">HOME</a>
+            <h5 class="card-title text-center">구매 신청 완료</h5>
+            <p class="card-text">
+                입금하실 계좌정보: <strong>카카오뱅크 3333-27-5746222</strong><br>
+                예금주: <strong>씨포이아이(C4EI)</strong><br><br>
+                <strong><%= amount %>원</strong> 을 입금하시면 <strong><%= quantity %> CEIK</strong>가 입금됩니다.<br>
+                입금확인 시 <strong><%= email %></strong> 로 Email 회신 드립니다.<br><br>
+                입금자명이 다를 경우 <strong>c4ei.net@gmail.net</strong> 으로 메일 부탁드립니다.
+            </p>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

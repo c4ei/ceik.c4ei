@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CEIK 구매</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f8f9fa;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        .card {
+            max-width: 500px;
+            margin: 20px;
+        }
+        .btn-primary {
+            background-color: #007bff;
+            border-color: #007bff;
+        }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <div class="card-body">
+            <a href="/">HOME</a>
+            <h5 class="card-title text-center">CEIK 구매</h5>
+            <form id="buyForm" action="/buy" method="POST">
+                <div class="mb-3">
+                    <label for="username" class="form-label">입금자 이름</label>
+                    <input type="text" class="form-control" id="username" name="username" required>
+                </div>
+                <div class="mb-3">
+                    <label for="amount" class="form-label">입금액 (최소1만원)</label>
+                    <input type="number" class="form-control" id="amount" name="amount" min="10000" required>
+                </div>
+                <div class="mb-3">
+                    <label for="quantity" class="form-label">구매 수량 (CEIK)</label>
+                    <input type="number" class="form-control" id="quantity" name="quantity" min="1" readonly required>
+                </div>
+                <input type="hidden" id="userIdx" name="userIdx" value="<%= userIdx %>">
+                <button type="submit" class="btn btn-primary w-100">구매 신청</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 11">
+        <div id="toast" class="toast align-items-center text-white bg-danger border-0" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="d-flex">
+                <div class="toast-body" id="toastBody"></div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const form = document.getElementById('buyForm');
+            const amountInput = document.getElementById('amount');
+            const quantityInput = document.getElementById('quantity');
+            const toastElement = document.getElementById('toast');
+            const toastBody = document.getElementById('toastBody');
+            const toast = new bootstrap.Toast(toastElement);
+
+            amountInput.addEventListener('input', function() {
+                const amount = parseFloat(amountInput.value);
+                if (!isNaN(amount) && amount >= 10000) {
+                    quantityInput.value = amount;
+                } else {
+                    quantityInput.value = '';
+                }
+            });
+
+            form.addEventListener('submit', function(event) {
+                event.preventDefault();
+                const username = document.getElementById('username').value;
+                const amount = parseFloat(amountInput.value);
+                const quantity = parseFloat(quantityInput.value);
+
+                if (!username) {
+                    showToast('입금자 이름을 입력해주세요.');
+                } else if (isNaN(amount) || amount < 10000) {
+                    showToast('입금액은 최소 1만원 이상이어야 합니다.');
+                } else if (isNaN(quantity) || quantity < 1) {
+                    showToast('구매 수량을 확인해주세요.');
+                } else {
+                    form.submit();
+                }
+            });
+
+            function showToast(message) {
+                toastBody.textContent = message;
+                toast.show();
+            }
+        });
+    </script>
+</body>
+</html>

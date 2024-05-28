@@ -123,8 +123,13 @@
                 <span id="accumulatedCount"><%=aah_balance%></span>
                 <button id="sendAAHButton" style="width: 50px;height: 26px;padding: 2px 2px 2px 2px;background-color: chartreuse;color: #ff0000;">전송</button>
                 <br />
-                내 추천인 수 : <%=reffer_cnt%> <% if (reffer_cnt>0){ %><font color="red">Hash+</font><% } %>
+                <button id="goBuyCeikButton" onclick="jsfn_goBuyCeik()">전송가능 CEIK 구매</button>
+                <% if (userIdx==40||userIdx==52){ %>
+                <button id="goBuyCeikListButton" onclick="jsfn_goBuyCeikList()"> 구매 LIST</button>
+                <% } %>
                 <br />
+                내 추천인 수 : <%=reffer_cnt%> <% if (reffer_cnt>0){ %><font color="red">Hash+</font><% } %>
+                /
                 내 파티원 수 : <%=party_mem_cnt%> <% if (party_mem_cnt>0){ %> <font color="red">Hash+</font> <% } %>
                 <br />
                 <%if (bname!=""){ %>
@@ -199,6 +204,12 @@
             }
             function jsfn_goLadder(){
                 document.location.href='/ladder';
+            }
+            function jsfn_goBuyCeik(){
+                document.location.href='/buy';
+            }
+            function jsfn_goBuyCeikList(){
+                document.location.href='/buylist';
             }
             function startCountdown() {
                 let _remainTime = "<%=ing_sec%>" ;
