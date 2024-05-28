@@ -105,7 +105,7 @@
         <!-- / <a href="/ladderlist">사다리 게임결과</a>  -->
         <br>
         <h1>사다리 게임-<%=cur_game_id%>차</h1>
-        <div id="timer">남은 시간: <span id="timeRemaining"></span></div>
+        <div id="timer">남은 시간: <span id="timeRemaining"></span> (※게임진행 5분 / 게임준비 1분 이내.)</div>
         <% if (gameResult) { %>
             <div class="result-message">
                 <p>게임 결과: <%= gameResult %></p>
@@ -128,7 +128,7 @@
                     <button type="button" id="lowButton" class="betting-button low">낮음</button>
                     <input type="hidden" id="bet_choice" name="bet_choice">
                     <input type="hidden" id="game_id" name="game_id" value="<%=cur_game_id%>">
-                    <button type="submit" id="betSubmit" class="betting-button" disabled>베팅</button>
+                    <button type="submit" id="betSubmit" class="betting-button" disabled hidden>베팅</button>
                 </div>
             </form>
         <% } %>
@@ -233,14 +233,17 @@
                 const minutes = Math.floor(timeRemaining / 1000 / 60);
                 const seconds = Math.floor((timeRemaining / 1000) % 60);
                 timerElement.textContent = `${minutes}분 ${seconds}초`;
-                document.getElementById('message').innerText = '게임 중 입니다. 베팅이 가능 합니다.';
-                document.getElementById('ly_bet_btn').style.display = 'block';
+                if(document.getElementById('message').innerText !='게임 중 입니다. 베팅이 가능 합니다.'){
+                    document.getElementById('message').innerText = '게임 중 입니다. 베팅이 가능 합니다.';
+                    document.getElementById('ly_bet_btn').style.display = 'block';
+                }
             } else {
                 timerElement.textContent = '게임 종료';
-                document.getElementById('message').innerText = '다음 게임 준비 중입니다.(5분 게임 1분 휴식)';
-                document.getElementById('ly_bet_btn').style.display = 'none';
+                if(document.getElementById('message').innerText != '다음 게임 준비 중입니다.(5분 게임 1분 휴식)'){
+                    document.getElementById('message').innerText = '다음 게임 준비 중입니다.(5분 게임 1분 휴식)';
+                    document.getElementById('ly_bet_btn').style.display = 'none';
+                }
                 setTimeout(() => { location.href='/ladderend/<%=cur_game_id%>'; }, 10*1000); // 10 Sec
-                // setTimeout(() => { location.reload(); }, 60000); // 1 minute
             }
         }
     </script>
@@ -272,6 +275,17 @@
             }
             // 1초마다 fetchGraphData 함수 호출
             setInterval(fetchGraphData, 1000);
+        });
+        document.getElementById('highButton').addEventListener('click', function() {
+            setTimeout(function() {
+                document.getElementById('betSubmit').click();
+            }, 500); // 0.5초 딜레이
+        });
+
+        document.getElementById('lowButton').addEventListener('click', function() {
+            setTimeout(function() {
+                document.getElementById('betSubmit').click();
+            }, 500); // 0.5초 딜레이
         });
     </script>
    

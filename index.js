@@ -1228,9 +1228,30 @@ async function getDataForGame(gameId) {
     const bets = await loadDB("SELECT bet_choice, COUNT(*) AS count FROM lad_bet WHERE game_id='"+gameId+"' GROUP BY bet_choice");
     const totalBets = bets.reduce((acc, bet) => acc + bet.count, 0);
     if (totalBets > 0) {
-        highPercent = (bets.find(bet => bet.bet_choice === 'high')?.count || 0) / totalBets * 100;
+        highPercent = (bets.find(bet => bet.bet_choice === 'high')?.count || 0) / totalBets * 100;  // 해당 요소가 찾아지면 그 요소의 count 값을 가져옵니다
+        // 이 코드는 bets 배열에서 bet_choice가 'high'인 첫 번째 요소를 찾습니다. 이때 bet은 배열의 각 요소를 의미합니다. 이 조건에 맞는 요소가 없으면 undefined를 반환합니다.
+        // 그런 다음 ?. 옵셔널 체이닝 연산자를 사용하여, count 속성이 있는 경우에만 해당 값을 가져옵니다. 이것은 undefined 또는 null일 때 count 값을 가져오려고 할 때 발생하는 TypeError를 방지합니다.
+        // 그리고 만약 찾은 요소의 count 값이 없다면(즉, undefined이거나 null이면), 대신 0을 사용합니다. 이는 안전한 기본값으로 설정되어, 에러를 방지합니다.
+        // 마지막으로, totalBets로 나누어 비율을 구하고 100을 곱하여 퍼센트 값으로 변환합니다. 이 값은 highPercent 변수에 할당됩니다.
+        // 따라서 위 코드는 bets 배열에서 'high' 베팅의 비율을 계산하고, 이를 퍼센트 값으로 변환하여 highPercent에 할당하는 것입니다.
+
         lowPercent = (bets.find(bet => bet.bet_choice === 'low')?.count || 0) / totalBets * 100;
     }
+    /*
+    const bets = await loadDB(` SELECT bet_choice, SUM(bet_amount) AS total_amount FROM lad_bet WHERE game_id='${gameId}' GROUP BY bet_choice `);
+
+    // 모든 베팅 금액의 총합을 계산
+    const totalBets = bets.reduce((acc, bet) => acc + bet.total_amount, 0);
+
+    if (totalBets > 0) {
+        // 'high'와 'low'에 대한 베팅 금액을 찾고 비율을 계산
+        highPercent = (bets.find(bet => bet.bet_choice === 'high')?.total_amount || 0) / totalBets * 100;
+        lowPercent = (bets.find(bet => bet.bet_choice === 'low')?.total_amount || 0) / totalBets * 100;
+    } else {
+        highPercent = 50;
+        lowPercent = 50;
+    }
+    */
     return {
         high: highPercent,  // 예시 데이터
         low: lowPercent
@@ -1303,7 +1324,7 @@ app.get('/ladder', async (req, res) => {
     }
 
     let _aah_balance= await jsfn_getDB_AAH(userIdx);
-    userBets = await loadDB("SELECT game_id, bet_choice, bet_amount, regdate , DATE_FORMAT(regdate, '%Y-%m-%d %H:%i:%s') AS YYMMDD ,result,win_amount FROM lad_bet WHERE userIdx='"+userIdx+"'  ORDER BY regdate DESC LIMIT 30 ");
+    userBets = await loadDB("SELECT game_id, bet_choice, bet_amount, regdate , DATE_FORMAT(regdate, '%Y-%m-%d %H:%i:%s') AS YYMMDD ,result,win_amount FROM lad_bet WHERE userIdx='"+userIdx+"'  ORDER BY regdate DESC LIMIT 10 ");
 
     res.render('ladder', {
         userIdx,
@@ -1377,24 +1398,15 @@ app.get('/ladderend/:game_id', async (req, res) => {
         return;
     }
     const game_id = req.params.game_id;
-    console.log("#################### /ladderend game_id:"+game_id+"####################");
-    // let userIdx = req.session.userIdx;
-    
-    // try{
-    //     const currentGame = await loadDB("SELECT IFNULL(result,'X') AS result FROM lad_game WHERE game_id='"+game_id+"'");
-    //     if (currentGame[0].result!='X') {
-    //         res.redirect('/ladder');
-    //         return;
-    //     }
-    // }catch(e){
-        
-    // }
+    // console.log("#################### /ladderend game_id:"+game_id+"####################");
+
     jsfn_ladder_save(req,game_id);
     res.redirect('/ladder');
 });
 
 async function jsfn_ladder_save(req, game_id){
     // console.log("#################### Line 1396 jsfn_ladder_save ####################" + getCurTimestamp());
+    // 게임 ID 확인 및 사용자 IP 가져오기:
     if(game_id==""){ return; }
     var user_ip = "";
     try{ 
@@ -1404,6 +1416,7 @@ async function jsfn_ladder_save(req, game_id){
     }
     console.log("#################### Line 1404 jsfn_ladder_save #################### game_id : " + game_id + " / " + getCurTimestamp());
     // const game_id = previousGame[0].game_id;
+    // 게임 결과 계산
     const bets = await loadDB("SELECT bet_choice, SUM(bet_amount) AS total FROM lad_bet WHERE game_id='"+game_id+"' GROUP BY bet_choice ");
     let result = 'high';
     if (bets.length == 2 && bets[1].total > bets[0].total) {
@@ -1411,62 +1424,56 @@ async function jsfn_ladder_save(req, game_id){
     }
     // console.log("Line 1410 - jsfn_ladder_save : result - " + result);
     await saveDB("UPDATE lad_game SET result = '"+result+"' WHERE game_id='"+game_id+"'");
-    // losingBets
+    
+    // 패배자의 베팅 결과 업데이트 losingBets
     await saveDB("UPDATE lad_bet SET result='"+result+"', amount='0.00', win_amount='0.00', sendYN='Y' WHERE game_id='"+game_id+"' AND bet_choice !='"+result+"'");
 
+    // 승리자 및 패배자 베팅 정보 조회
     let sql_sel1 = " SELECT userIdx, bet_amount FROM lad_bet WHERE game_id='"+game_id+"' AND bet_choice='"+result+"'";
     const winningBets = await loadDB(sql_sel1);
     // console.log(sql_sel1+" : sql_sel1");
     let sql_sel2 = " SELECT SUM(bet_amount) AS total FROM lad_bet WHERE game_id='"+game_id+"' AND bet_choice != '"+result+"' ";
     const losingBets = await loadDB(sql_sel2);
+    // 승리자 배당금 계산 및 업데이트
     if (winningBets.length > 0 && losingBets.length > 0) {
         const totalLosingAmount = losingBets[0].total;
         const fee = totalLosingAmount * 0.10;
         const distributionAmount = totalLosingAmount - fee;
         const totalWinningAmount = winningBets.reduce((sum, bet) => sum + parseFloat(bet.bet_amount), 0);
-
+    
         for (let bet of winningBets) {
-            let sql_chk1 = " SELECT sendYN FROM lad_bet WHERE game_id='"+game_id+"' AND bet_choice='"+result+"' and userIdx='"+bet.userIdx+"'";
+            let sql_chk1 = "SELECT sendYN FROM lad_bet WHERE game_id='" + game_id + "' AND bet_choice='" + result + "' and userIdx='" + bet.userIdx + "'";
             const sendYN = await loadDB(sql_chk1);
-            if (sendYN[0].sendYN == 'N'){
-                // const winAmount = (parseFloat(bet.bet_amount) / totalWinningAmount) * distributionAmount;
-                // 내가 베팅한 금액 - 수수료 10% + 패한사람 합한 금액
-                const winAmount =  parseFloat(bet.bet_amount * 0.10) + (parseFloat(bet.bet_amount) / totalWinningAmount) * distributionAmount;
-                await saveDB("UPDATE users SET aah_balance = CAST(aah_balance AS DECIMAL(22,8)) + CAST('"+winAmount+"' AS DECIMAL(22,8)) WHERE userIdx = '"+bet.userIdx+"'");
-                
-                const _memo = "사다리[승] "+winAmount;
-                const sql2 = "INSERT INTO mininglog (userIdx, aah_balance, regdate, regip, memo) VALUES ('"+bet.userIdx+"', '"+winAmount+"', DATE_SUB(NOW(), INTERVAL 7205 SECOND), '"+user_ip+"', '"+_memo+"' )";
+            if (sendYN[0].sendYN == 'N') {
+                let winAmount = 0;
+                if (winningBets.length === 1) {
+                    // 단독 참여자의 경우, 수수료 10%를 뗀 원금을 반환
+                    winAmount = parseFloat(bet.bet_amount) * 0.90;
+                } else {
+                    // 여러 명이 참여한 경우, 배분된 금액을 계산
+                    winAmount = (parseFloat(bet.bet_amount) / totalWinningAmount) * distributionAmount;
+                }
+                await saveDB("UPDATE users SET aah_balance = CAST(aah_balance AS DECIMAL(22,8)) + CAST('" + winAmount + "' AS DECIMAL(22,8)) WHERE userIdx = '" + bet.userIdx + "'");
+    
+                const _memo = "사다리[승] " + winAmount;
+                const sql2 = "INSERT INTO mininglog (userIdx, aah_balance, regdate, regip, memo) VALUES ('" + bet.userIdx + "', '" + winAmount + "', DATE_SUB(NOW(), INTERVAL 7205 SECOND), '" + user_ip + "', '" + _memo + "')";
                 try {
                     await saveDB(sql2);
                 } catch (e) {
                     console.error(e);
                 }
                 let sql_upd = "";
-                sql_upd = sql_upd + " UPDATE lad_bet SET result = '"+result+"' , amount='0.00', win_amount='"+winAmount+"' WHERE game_id='"+game_id+"' AND bet_choice='"+result+"' and userIdx='"+bet.userIdx+"' ";
-                console.log(sql_upd+" : sql_upd");
+                sql_upd = sql_upd + " UPDATE lad_bet SET result = '" + result + "', amount='0.00', win_amount='" + winAmount + "' WHERE game_id='" + game_id + "' AND bet_choice='" + result + "' and userIdx='" + bet.userIdx + "' ";
+                console.log(sql_upd + " : sql_upd");
                 try {
                     await saveDB(sql_upd);
                 } catch (e) {
                     console.error(e);
                 }
-            }else{
+            } else {
                 console.log("이미 처리된 건입니다.");
             }
         }
-        /*
-        for (let bet of losingBets) {
-            const loseAmount = parseFloat(bet.bet_amount);
-            await saveDB("UPDATE users SET aah_balance = CAST(aah_balance AS DECIMAL(22,8)) - CAST('"+loseAmount+"' AS DECIMAL(22,8)) WHERE userIdx = '"+bet.userIdx+"'");
-            
-            const _memo = `사다리 - 패 - ${loseAmount}`;
-            const sql2 = `INSERT INTO mininglog (userIdx, aah_balance, regdate, regip, memo) VALUES ('${bet.userIdx}', '${-loseAmount}', DATE_SUB(NOW(), INTERVAL 7205 SECOND), '${user_ip}', '${_memo}')`;
-            try {
-                await saveDB(sql2);
-            } catch (e) {
-                console.error(e);
-            }
-        }
-        */
     }
 }
 
