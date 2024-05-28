@@ -1462,7 +1462,7 @@ async function jsfn_ladder_save(req, game_id){
                     console.error(e);
                 }
                 let sql_upd = "";
-                sql_upd = sql_upd + " UPDATE lad_bet SET result = '" + result + "', amount='0.00', win_amount='" + winAmount + "' WHERE game_id='" + game_id + "' AND bet_choice='" + result + "' and userIdx='" + bet.userIdx + "' ";
+                sql_upd = sql_upd + " UPDATE lad_bet SET result = '" + result + "', amount='0.00', win_amount='" + winAmount + "',sendYN='Y' WHERE game_id='" + game_id + "' AND bet_choice='" + result + "' and userIdx='" + bet.userIdx + "' ";
                 console.log(sql_upd + " : sql_upd");
                 try {
                     await saveDB(sql_upd);
