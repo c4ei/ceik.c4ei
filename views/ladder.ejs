@@ -28,7 +28,7 @@
             background-color: #ccc;
             cursor: not-allowed;
         }
-        .bar-container {
+        .graph-container {
             margin-top: 20px;
             position: relative;
             height: 30px;
@@ -78,6 +78,23 @@
             margin-top: 20px;
             font-size: 18px;
         }
+        @media (min-width: 600px) {
+            .betting-buttons {
+                flex-direction: row;
+                width: auto;
+            }
+            .betting-button {
+                margin: 10px;
+            }
+        }
+        #graph-container {
+            width: 100%;
+            display: flex;
+            justify-content: space-around;
+        }
+        #high-bar, #low-bar {
+            width: 45%;
+        }
     </style>
 </head>
 <body>
@@ -121,12 +138,12 @@
             <p>얻은 CEIK: <%= userCEIKGain %></p>
             <p>원금 대비 증가율: <%= userPercentGain %>%</p>
         </div>
-        <div class="bar-container">
+        <div class="graph-container">
             <div id="highBar" class="bar high-bar" style="width: <%= highPercent.toFixed(2) %>%"></div>
             <div id="lowBar" class="bar low-bar" style="width: <%= lowPercent.toFixed(2) %>%"></div>
             <div class="bar-text">
-                <span>높음: <%= highPercent.toFixed(2) %>%</span>
-                <span>낮음: <%= lowPercent.toFixed(2) %>%</span>
+                <span>높음: <span id="highBar_txt"><%= highPercent.toFixed(2) %></span>%</span>
+                <span>낮음: <span id="lowBar_txt"><%= lowPercent.toFixed(2) %></span>%</span>
             </div>
         </div>
         <% if (userBets && userBets.length > 0) { 
@@ -228,6 +245,36 @@
                 // setTimeout(() => { location.reload(); }, 60000); // 1 minute
             }
         }
+    </script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const gameId = '<%=cur_game_id%>';
+
+            function fetchGraphData() {
+                fetch(`/api/graph-data/${gameId}`)
+                    .then(response => response.json())
+                    .then(data => updateGraph(data))
+                    .catch(error => console.error('Error fetching graph data:', error));
+            }
+
+            function updateGraph(data) {
+                const highBar = document.getElementById('highBar');
+                const lowBar = document.getElementById('lowBar');
+                const highBar_txt = document.getElementById('highBar_txt');
+                const lowBar_txt = document.getElementById('lowBar_txt');
+                lowBar
+                if (highBar && lowBar) {
+                    highBar.style.width = data.high + '%';
+                    lowBar.style.width = data.low + '%';
+                    highBar_txt.innerText = data.high.toFixed(2);
+                    lowBar_txt.innerText = data.low.toFixed(2);
+                } else {
+                    console.error('Graph elements not found');
+                }
+            }
+            // 1초마다 fetchGraphData 함수 호출
+            setInterval(fetchGraphData, 1000);
+        });
     </script>
    
 </body>

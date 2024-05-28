@@ -1211,6 +1211,32 @@ cron.schedule('*/6 * * * *', async () => {
     }
 });
 
+// 데이터를 반환하는 엔드포인트 추가
+app.get('/api/graph-data/:game_id', async (req, res) => {
+    const gameId = req.params.game_id;
+    
+    const data = await getDataForGame(gameId); // 예: getDataForGame 함수가 gameId에 따른 데이터를 반환
+    res.json(data);
+});
+
+// gameId에 따른 데이터를 반환하는 예시 함수
+async function getDataForGame(gameId) {
+    let highPercent = 50;
+    let lowPercent = 50;
+
+    const bets = await loadDB("SELECT bet_choice, COUNT(*) AS count FROM lad_bet WHERE game_id='"+gameId+"' GROUP BY bet_choice");
+    const totalBets = bets.reduce((acc, bet) => acc + bet.count, 0);
+    if (totalBets > 0) {
+        highPercent = (bets.find(bet => bet.bet_choice === 'high')?.count || 0) / totalBets * 100;
+        lowPercent = (bets.find(bet => bet.bet_choice === 'low')?.count || 0) / totalBets * 100;
+    }
+    return {
+        high: highPercent,  // 예시 데이터
+        low: lowPercent
+    };
+}
+
+
 app.get('/ladder', async (req, res) => {
     if (!req.session.email) {
         res.redirect('/login');
