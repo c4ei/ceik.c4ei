@@ -1477,6 +1477,31 @@ async function jsfn_ladder_save(req, game_id){
     }
 }
 
+app.get('/ladderList', async (req, res) => {
+    if (!req.session.email) {
+        res.redirect('/login');
+        return;
+    }
+    const userIdx = req.session.userIdx; // from session 
+    const page = parseInt(req.query.page) || 1; // 현재 페이지, 기본값은 1
+    const limit = 10; // 한 페이지당 보여줄 항목 수
+    const offset = (page - 1) * limit; // 페이지네이션을 위한 오프셋 계산
+
+    // 전체 베팅 수를 계산하여 페이지 수를 계산합니다.
+    const totalBetsResult = await loadDB(`SELECT COUNT(*) as count FROM lad_bet WHERE userIdx='${userIdx}'`);
+    const totalBetsCount = totalBetsResult[0].count;
+    const totalPages = Math.ceil(totalBetsCount / limit);
+
+    // 현재 페이지에 해당하는 베팅 항목을 가져옵니다.
+    const userBets = await loadDB(`SELECT game_id, bet_choice, bet_amount, regdate, DATE_FORMAT(regdate, '%Y-%m-%d %H:%i:%s') AS YYMMDD, result, win_amount FROM lad_bet WHERE userIdx='${userIdx}' ORDER BY regdate DESC LIMIT ${limit} OFFSET ${offset}`);
+
+    res.render('ladderList', {
+        userIdx,
+        userBets,
+        currentPage: page,
+        totalPages
+    });
+});
 // ######################### ladder end #########################
 
 // ######################### web push start #########################

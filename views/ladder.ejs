@@ -101,11 +101,10 @@
 </head>
 <body>
     <div class="container">
-        <a href="/">HOME</a> 
-        <!-- / <a href="/ladderlist">사다리 게임결과</a>  -->
+        <a href="/">HOME</a> / <a href="/ladderList">사다리 게임결과</a> 
         <br>
         <h1>사다리 게임-<%=cur_game_id%>차</h1>
-        <div id="timer">남은 시간: <span id="timeRemaining"></span> (※게임진행 5분 / 게임준비 1분 이내.)</div>
+        <div id="timer">남은 시간: <span id="timeRemaining"></span> </div>
         <% if (gameResult) { %>
             <div class="result-message">
                 <p>게임 결과: <%= gameResult %></p>
@@ -150,7 +149,7 @@
         </div>
         <% if (userBets && userBets.length > 0) { %>
             <div class="bet-history">
-                <h3>나의 베팅 내역</h3>
+                <h3>나의 베팅 내역 (최근 10행)</h3>
                 <table>
                     <tr>
                         <th>게임번호</th>
@@ -239,11 +238,11 @@
                 }
             } else {
                 timerElement.textContent = '게임 종료';
-                if(document.getElementById('message').innerText != '다음 게임 준비 중입니다.(5분 게임 1분 휴식)'){
-                    document.getElementById('message').innerText = '다음 게임 준비 중입니다.(5분 게임 1분 휴식)';
+                if(document.getElementById('message').innerText != '다음 게임 준비 중입니다.'){
+                    document.getElementById('message').innerText = '다음 게임 준비 중입니다.';
                     document.getElementById('ly_bet_btn').style.display = 'none';
                 }
-                setTimeout(() => { location.href='/ladderend/<%=cur_game_id%>'; }, 10*1000); // 10 Sec
+                setTimeout(() => { location.href='/ladderend/<%=cur_game_id%>'; }, 3*1000); // 3 Sec
             }
         }
     </script>
