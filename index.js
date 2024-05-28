@@ -1189,10 +1189,11 @@ async function jsfn_create_lad_game(){
         const str_sql = "INSERT INTO lad_game (game_time) SELECT DATE_ADD(NOW(), INTERVAL 6 MINUTE) AS game_time FROM DUAL ";
         try{
             await saveDB(str_sql);
-            jsfn_ladder_save(req , currentGame[0].game_id); // 이전게임을 정산한다
         }catch(e){
             console.log("jsfn_create_lad_game\n"+str_sql);
         }
+        let req=null;
+        jsfn_ladder_save(req , currentGame[0].game_id); // 이전게임을 정산한다
         console.log("#### NEW lad_game create - "+getCurTimestamp() +"####");
     }else{
         console.log(currentGame[0].diffSec+"초로 진행 중인 게임이 있어 게임 생성 불가능 - jsfn_create_lad_game" );
@@ -1301,13 +1302,7 @@ app.get('/ladder', async (req, res) => {
         }
     }
 
-    let _aah_balance="0";
-    let sql = "SELECT aah_balance FROM users WHERE userIdx='"+userIdx+"'";
-    let result = await loadDB(sql);
-    if(result.length>0){
-        _aah_balance = result[0].aah_balance;
-    }
-    // console.log([userIdx] +" : [userIdx] 1253");
+    let _aah_balance= await jsfn_getDB_AAH(userIdx);
     userBets = await loadDB("SELECT game_id, bet_choice, bet_amount, regdate , DATE_FORMAT(regdate, '%Y-%m-%d %H:%i:%s') AS YYMMDD ,result,win_amount FROM lad_bet WHERE userIdx='"+userIdx+"'  ORDER BY regdate DESC LIMIT 30 ");
 
     res.render('ladder', {
@@ -1336,6 +1331,7 @@ async function jsfn_getDB_AAH(userIdx){
     if(result.length>0){
         _aah_balance = result[0].aah_balance;
     }
+    return _aah_balance;
 }
 
 app.post('/ladder/bet', async (req, res) => {
@@ -1375,47 +1371,54 @@ app.post('/ladder/bet', async (req, res) => {
     res.redirect('/ladder');
 });
 
-app.get('/ladderend', async (req, res) => {
+app.get('/ladderend/:game_id', async (req, res) => {
     if (!req.session.email) {
         res.redirect('/login');
         return;
     }
+    const game_id = req.params.game_id;
+    console.log("#################### /ladderend game_id:"+game_id+"####################");
     // let userIdx = req.session.userIdx;
-    const game_id = req.query.game_id;
-    try{
-        const currentGame = await loadDB("SELECT IFNULL(result,'X') AS result FROM lad_game WHERE game_id='"+game_id+"'");
-        if (currentGame[0].result!='X') {
-            res.redirect('/ladder');
-            return;
-        }
-    }catch(e){
+    
+    // try{
+    //     const currentGame = await loadDB("SELECT IFNULL(result,'X') AS result FROM lad_game WHERE game_id='"+game_id+"'");
+    //     if (currentGame[0].result!='X') {
+    //         res.redirect('/ladder');
+    //         return;
+    //     }
+    // }catch(e){
         
-    }
+    // }
     jsfn_ladder_save(req,game_id);
     res.redirect('/ladder');
 });
 
 async function jsfn_ladder_save(req, game_id){
+    // console.log("#################### Line 1396 jsfn_ladder_save ####################" + getCurTimestamp());
     if(game_id==""){ return; }
     var user_ip = "";
     try{ 
         user_ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress || req.socket.remoteAddress || req.connection.socket.remoteAddress;
     }catch(e){
-
+        console.log("Line 1402 - jsfn_ladder_save : " + e);
     }
+    console.log("#################### Line 1404 jsfn_ladder_save #################### game_id : " + game_id + " / " + getCurTimestamp());
     // const game_id = previousGame[0].game_id;
-    const bets = await loadDB(`SELECT bet_choice, SUM(bet_amount) AS total FROM lad_bet WHERE game_id = ${game_id} GROUP BY bet_choice`);
+    const bets = await loadDB("SELECT bet_choice, SUM(bet_amount) AS total FROM lad_bet WHERE game_id='"+game_id+"' GROUP BY bet_choice ");
     let result = 'high';
     if (bets.length == 2 && bets[1].total > bets[0].total) {
         result = 'low';
     }
+    // console.log("Line 1410 - jsfn_ladder_save : result - " + result);
+    await saveDB("UPDATE lad_game SET result = '"+result+"' WHERE game_id='"+game_id+"'");
+    // losingBets
+    await saveDB("UPDATE lad_bet SET result='"+result+"', amount='0.00', win_amount='0.00', sendYN='Y' WHERE game_id='"+game_id+"' AND bet_choice !='"+result+"'");
 
-    await saveDB(`UPDATE lad_game SET result = '${result}' WHERE game_id = ${game_id}`);
-    await saveDB(`UPDATE lad_bet SET result = '${result}' , amount='0.00', win_amount='0.00' WHERE game_id = ${game_id} AND bet_choice != '${result}'` );
-
-    const winningBets = await loadDB(`SELECT userIdx, bet_amount FROM lad_bet WHERE game_id = ${game_id} AND bet_choice = '${result}'`);
-    const losingBets = await loadDB(`SELECT SUM(bet_amount) AS total FROM lad_bet WHERE game_id = ${game_id} AND bet_choice != '${result}'`);
-
+    let sql_sel1 = " SELECT userIdx, bet_amount FROM lad_bet WHERE game_id='"+game_id+"' AND bet_choice='"+result+"'";
+    const winningBets = await loadDB(sql_sel1);
+    // console.log(sql_sel1+" : sql_sel1");
+    let sql_sel2 = " SELECT SUM(bet_amount) AS total FROM lad_bet WHERE game_id='"+game_id+"' AND bet_choice != '"+result+"' ";
+    const losingBets = await loadDB(sql_sel2);
     if (winningBets.length > 0 && losingBets.length > 0) {
         const totalLosingAmount = losingBets[0].total;
         const fee = totalLosingAmount * 0.10;
@@ -1423,15 +1426,31 @@ async function jsfn_ladder_save(req, game_id){
         const totalWinningAmount = winningBets.reduce((sum, bet) => sum + parseFloat(bet.bet_amount), 0);
 
         for (let bet of winningBets) {
-            const winAmount = (parseFloat(bet.bet_amount) / totalWinningAmount) * distributionAmount;
-            await saveDB("UPDATE users SET aah_balance = CAST(aah_balance AS DECIMAL(22,8)) + CAST('"+winAmount+"' AS DECIMAL(22,8)) WHERE userIdx = '"+bet.userIdx+"'");
-            
-            const _memo = `사다리 - 승 - ${winAmount}`;
-            const sql2 = `INSERT INTO mininglog (userIdx, aah_balance, regdate, regip, memo) VALUES ('${bet.userIdx}', '${winAmount}', DATE_SUB(NOW(), INTERVAL 7205 SECOND), '${user_ip}', '${_memo}')`;
-            try {
-                await saveDB(sql2);
-            } catch (e) {
-                console.error(e);
+            let sql_chk1 = " SELECT sendYN FROM lad_bet WHERE game_id='"+game_id+"' AND bet_choice='"+result+"' and userIdx='"+bet.userIdx+"'";
+            const sendYN = await loadDB(sql_chk1);
+            if (sendYN[0].sendYN == 'N'){
+                // const winAmount = (parseFloat(bet.bet_amount) / totalWinningAmount) * distributionAmount;
+                // 내가 베팅한 금액 - 수수료 10% + 패한사람 합한 금액
+                const winAmount =  parseFloat(bet.bet_amount * 0.10) + (parseFloat(bet.bet_amount) / totalWinningAmount) * distributionAmount;
+                await saveDB("UPDATE users SET aah_balance = CAST(aah_balance AS DECIMAL(22,8)) + CAST('"+winAmount+"' AS DECIMAL(22,8)) WHERE userIdx = '"+bet.userIdx+"'");
+                
+                const _memo = "사다리[승] "+winAmount;
+                const sql2 = "INSERT INTO mininglog (userIdx, aah_balance, regdate, regip, memo) VALUES ('"+bet.userIdx+"', '"+winAmount+"', DATE_SUB(NOW(), INTERVAL 7205 SECOND), '"+user_ip+"', '"+_memo+"' )";
+                try {
+                    await saveDB(sql2);
+                } catch (e) {
+                    console.error(e);
+                }
+                let sql_upd = "";
+                sql_upd = sql_upd + " UPDATE lad_bet SET result = '"+result+"' , amount='0.00', win_amount='"+winAmount+"' WHERE game_id='"+game_id+"' AND bet_choice='"+result+"' and userIdx='"+bet.userIdx+"' ";
+                console.log(sql_upd+" : sql_upd");
+                try {
+                    await saveDB(sql_upd);
+                } catch (e) {
+                    console.error(e);
+                }
+            }else{
+                console.log("이미 처리된 건입니다.");
             }
         }
         /*

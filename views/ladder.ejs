@@ -15,6 +15,8 @@
             padding: 10px 20px;
             font-size: 16px;
             cursor: pointer;
+            background-color: #007bff;
+            color: #fff;
         }
         .high {
             background-color: #4CAF50;
@@ -146,9 +148,7 @@
                 <span>낮음: <span id="lowBar_txt"><%= lowPercent.toFixed(2) %></span>%</span>
             </div>
         </div>
-        <% if (userBets && userBets.length > 0) { 
-            let loopCnt=0;
-            %>
+        <% if (userBets && userBets.length > 0) { %>
             <div class="bet-history">
                 <h3>나의 베팅 내역</h3>
                 <table>
@@ -157,15 +157,13 @@
                         <th>베팅 선택</th>
                         <th>베팅 금액 (CEIK)</th>
                         <th>결과</th>
-                        <th>당첨금액</th>
+                        <th>승리금액</th>
                         <th>베팅 시간</th>
                     </tr>
-                    <% userBets.forEach(function(bet) { 
-                        loopCnt++;
-                        %>
-                        <tr>
+                    <% userBets.forEach(function(bet) { %>
+                        <tr <%if(bet.bet_choice==bet.result){%> bgcolor="#f7f9cb" <%} %>>
                             <td>
-                                <% if (bet.result==null&&loopCnt!=1){  %><a href="/ladderend?game_id="><%= bet.game_id %></a>
+                                <% if (bet.result==null && bet.game_id!=cur_game_id ){  %><a href="/ladderend/<%= bet.game_id %>"><%= bet.game_id %></a>
                                 <% } else { %>
                                 <%= bet.game_id %>
                                 <% } %>
@@ -241,7 +239,7 @@
                 timerElement.textContent = '게임 종료';
                 document.getElementById('message').innerText = '다음 게임 준비 중입니다.(5분 게임 1분 휴식)';
                 document.getElementById('ly_bet_btn').style.display = 'none';
-                setTimeout(() => { location.href='/ladderend?game_id=<%=cur_game_id%>'; }, 10*1000); // 10 Sec
+                setTimeout(() => { location.href='/ladderend/<%=cur_game_id%>'; }, 10*1000); // 10 Sec
                 // setTimeout(() => { location.reload(); }, 60000); // 1 minute
             }
         }
