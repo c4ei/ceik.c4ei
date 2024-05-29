@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scratch Card Game</title>
+    <style>
+        #announcement {
+            background-color: #fffbcc;
+            border: 1px solid #ffd700;
+            padding: 10px;
+            margin: 10px 0;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div id="announcement">
+        <h2 id="announcementTitle"></h2>
+        <p id="announcementContent"></p>
+        <p id="announcementDate"></p>
+    </div>
+    <!-- 나머지 HTML 요소들 -->
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const announcement = document.getElementById('announcement');
+            const announcementTitle = document.getElementById('announcementTitle');
+            const announcementContent = document.getElementById('announcementContent');
+            const announcementDate = document.getElementById('announcementDate');
+
+            // 서버로부터 공지 사항을 가져옴
+            fetch('/get_announcement')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.title && data.content) {
+                        announcementTitle.textContent = data.title;
+                        announcementContent.textContent = data.content;
+                        announcementDate.textContent = new Date(data.created_at).toLocaleString();
+                        announcement.style.display = 'block';
+                    }
+                });
+        });
+    </script>
+</body>
+</html>

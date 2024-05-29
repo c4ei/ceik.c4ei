@@ -45,7 +45,7 @@
         <h1 class="mt-4">스크래치 복권 게임</h1>
         <div class="mb-4">
             <p>로그인한 사용자: <%= email %></p>
-            <p>현재 잔액: <%= balance %> CEIK</p>
+            <p>현재 잔액: <%= balance %> CEIK - 복권 긁는데 1CEIK 필요</p>
         </div>
         <span style="text-align: center;width:100%;">
             <div id="scratchCard" class="scratch-card mt-4">
@@ -67,38 +67,66 @@
             const ctx = scratchOverlay.getContext('2d');
             let isDrawing = false;
             let revealedArea = 0;
-
+            let isRequestSent = false; // 추가: 요청이 진행 중인지 추적
+    
             // Set up canvas
             scratchOverlay.width = scratchCard.clientWidth;
             scratchOverlay.height = scratchCard.clientHeight;
             ctx.fillStyle = 'silver';
             ctx.fillRect(0, 0, scratchOverlay.width, scratchOverlay.height);
-
-            scratchOverlay.addEventListener('mousedown', () => isDrawing = true);
-            scratchOverlay.addEventListener('mouseup', () => isDrawing = false);
-            scratchOverlay.addEventListener('mouseout', () => isDrawing = false);
-            scratchOverlay.addEventListener('mousemove', (e) => {
+    
+            const startDrawing = (e) => {
+                isDrawing = true;
+                draw(e);
+            };
+    
+            const stopDrawing = () => {
+                isDrawing = false;
+            };
+    
+            const draw = (e) => {
                 if (!isDrawing) return;
+                let x, y;
                 const rect = scratchOverlay.getBoundingClientRect();
-                const x = e.clientX - rect.left;
-                const y = e.clientY - rect.top;
-                ctx.globalCompositeOperation = 'source-over';  // Ensure we're drawing over the existing content
-                ctx.fillStyle = '#ddd';  // Set the color to be used for the scratch effect
+    
+                if (e.touches) {
+                    x = e.touches[0].clientX - rect.left;
+                    y = e.touches[0].clientY - rect.top;
+                } else {
+                    x = e.clientX - rect.left;
+                    y = e.clientY - rect.top;
+                }
+    
+                ctx.globalCompositeOperation = 'source-over';
+                ctx.fillStyle = '#ddd';
                 ctx.beginPath();
                 ctx.arc(x, y, 10, 0, Math.PI * 2, false);
                 ctx.fill();
                 ctx.closePath();
                 revealedArea += 10 * 10 * Math.PI;
                 checkScratchProgress();
-            });
-
+            };
+    
+            scratchOverlay.addEventListener('mousedown', startDrawing);
+            scratchOverlay.addEventListener('mouseup', stopDrawing);
+            scratchOverlay.addEventListener('mouseout', stopDrawing);
+            scratchOverlay.addEventListener('mousemove', draw);
+    
+            scratchOverlay.addEventListener('touchstart', startDrawing);
+            scratchOverlay.addEventListener('touchend', stopDrawing);
+            scratchOverlay.addEventListener('touchcancel', stopDrawing);
+            scratchOverlay.addEventListener('touchmove', draw);
+    
             function checkScratchProgress() {
                 const totalArea = scratchOverlay.width * scratchOverlay.height;
-                if (revealedArea / totalArea > 0.25) {
-                    revealScratchResult();
+                if (revealedArea / totalArea > 0.50) {
+                    if (!isRequestSent) { // 요청이 이미 진행 중인지 확인
+                        isRequestSent = true; // 요청이 진행 중임을 표시
+                        revealScratchResult();
+                    }
                 }
             }
-
+    
             async function revealScratchResult() {
                 const response = await fetch('/scratch_play', { method: 'POST' });
                 const result = await response.json();
@@ -108,6 +136,7 @@
             }
         });
     </script>
+    
     <div class="card mt-4">
         <div class="card-header">
             당첨 확률 및 금액

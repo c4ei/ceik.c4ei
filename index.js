@@ -1631,7 +1631,6 @@ app.get('/scratch', checkLogin, async (req, res) => {
     const userIdx = req.session.userIdx;
     const sql_sel1 = `SELECT userIdx, email, point, aah_balance FROM users WHERE userIdx = ${userIdx}`;
     const user = await loadDB(sql_sel1);
-
     if (user.length > 0) {
         res.render('scratch', {
             email: user[0].email,
@@ -1648,22 +1647,25 @@ app.post('/scratch_play', checkLogin, async (req, res) => {
     const userIdx = req.session.userIdx;
 
     let balance = await jsfn_getDB_AAH(userIdx);
+    // console.log('Initial balance:', balance);
 
     // 1 CEIK 차감
     const betAmount = 1;
     if (parseFloat(balance) < betAmount) {
-        // return res.status(400).json({ message: '잔액이 부족합니다.' });
         let _errAlert = "<script>alert('잔액이 부족합니다.');document.location.href='/';</script>";
         res.send(_errAlert);
         return;
     }
 
-    // balance -= betAmount;
+    // 차감 후 balance 확인
     await saveDB("UPDATE users SET aah_balance=CAST(aah_balance AS DECIMAL(22,8))-CAST('"+betAmount+"' AS DECIMAL(22,8)) WHERE userIdx = '"+userIdx+"'");
+    // balance = await jsfn_getDB_AAH(userIdx);
+    // console.log('After deducting betAmount, balance:', balance);
+
     // mininglog 테이블에 기록
     const _memo = `즉석복권 구매 ${betAmount}`;
     let user_ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress || req.socket.remoteAddress || req.connection.socket.remoteAddress;
-    await saveDB(`INSERT INTO mininglog (userIdx, aah_balance, regdate, regip, memo) VALUES ('${userIdx}', '${betAmount}', NOW(), '${user_ip}', '${_memo}')`);
+    await saveDB(`INSERT INTO mininglog (userIdx, aah_balance, regdate, regip, memo) VALUES ('${userIdx}', '${balance}', NOW(), '${user_ip}', '${_memo}')`);
 
     // 당첨 확률 세분화
     const probabilities = {
@@ -1684,7 +1686,6 @@ app.post('/scratch_play', checkLogin, async (req, res) => {
 
     for (const [ceik, prob] of Object.entries(probabilities)) {
         let _rndNum = Math.random();
-        // console.log("_rndNum : " + _rndNum +" / prob : " + prob);
         if (_rndNum < prob) {
             result = '승리';
             multiplier = ceik / 100000;
@@ -1693,35 +1694,66 @@ app.post('/scratch_play', checkLogin, async (req, res) => {
     }
 
     let winnings = betAmount * multiplier;
-    if (winnings.toFixed(2)==0.00){
+    if (winnings.toFixed(2) == 0.00){
         winnings = 0.01;
     }
     const message = result === '승리' ? `축하합니다! ${winnings.toFixed(2)} CEIK를 받으셨습니다! ` : '다음 기회에!';
 
     // 승리 시 원금 + 90% 지급
     if (result === '승리') {
-        // balance += winnings;
         const _memo2 = `즉석복권 승리 ${winnings}`;
         await saveDB(`INSERT INTO mininglog (userIdx, aah_balance, regdate, regip, memo) VALUES ('${userIdx}', '${winnings}', NOW(), '${user_ip}', '${_memo2}')`);
         await saveDB("UPDATE users SET aah_balance=CAST(aah_balance AS DECIMAL(22,8)) + CAST('"+winnings+"' AS DECIMAL(22,8)) WHERE userIdx='"+userIdx+"'");
+        // balance = await jsfn_getDB_AAH(userIdx);
+        // console.log('After winning, balance:', balance);
     }
 
     // 회수한 금액 및 지급한 금액 업데이트
     if (result === '패배') {
         await saveDB(`UPDATE scratch_statistics SET total_collected = total_collected + ${betAmount} WHERE id = 1`);
-        // 로그 저장
         await saveDB(`INSERT INTO scratch_log (userIdx, result, qty) VALUES ('${userIdx}', '${result}', '${betAmount}')`);
     } else {
         await saveDB(`UPDATE scratch_statistics SET total_paid = total_paid + ${winnings} WHERE id = 1`);
-        // 로그 저장
         await saveDB(`INSERT INTO scratch_log (userIdx, result, qty) VALUES ('${userIdx}', '${result}', '${winnings}')`);
     }
 
     let _aah_balance = await jsfn_getDB_AAH(userIdx);
+    // console.log('Final balance:', _aah_balance);
     res.json({ message, balance: parseFloat(_aah_balance).toFixed(2) });
 });
-
 // ######################### scratch end #########################
+
+// ######################### notice start #########################
+app.get('/get_announcement', async (req, res) => {
+    const sql = `SELECT * FROM bbs WHERE gubun = 1 ORDER BY created_at DESC LIMIT 1`;
+    const notice = await loadDB(sql);
+    if (notice.length > 0) {
+        res.json(notice[0]);
+    } else {
+        res.json({ message: 'No announcements found.' });
+    }
+});
+
+// 댓글 가져오기
+app.get('/get_comments/:bbs_id', async (req, res) => {
+    const bbsId = req.params.bbs_id;
+    const sql = "SELECT * FROM bbs_comments WHERE bbs_id = '"+bbsId+"' ORDER BY created_at DESC";
+    const bbs_comment = await loadDB(sql);
+    if (bbs_comment.length > 0) {
+        res.json(bbs_comment[0]);
+    }
+});
+
+// 댓글 추가하기
+app.post('/add_comment', express.json(), async (req, res) => {
+    let { bbs_id, content } = req.body;
+    bbs_id = jsfnRepSQLinj(bbs_id);
+    content = jsfnRepSQLinj(content);
+    const sql = "INSERT INTO bbs_comments (bbs_id, content) VALUES ('"+bbs_id+"', '"+content+"')";
+    await saveDB(sql);
+    res.json({ message: 'Comment added successfully.' });
+});
+// ######################### notice end #########################
 
 // ######################### buyCeik KRW start #########################
 app.get('/buy', async (req, res) => {
