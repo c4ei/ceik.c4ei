@@ -141,10 +141,11 @@
         </div>
         
         <button id="showMoreButton" onclick="jsfn_lyShow()">추가정보</button>
-        <button id="subscribeButton">PUSH알림</button><br>
-        <button id="showgoRoultteButton" onclick="jsfn_goRoultte()">룰렛</button>
+        <button id="subscribeButton">PUSH알림</button>
+        <button id="showgoRoultteButton" onclick="jsfn_goRoultte()">룰렛</button><br>
         <button id="showgoLadderButton" onclick="jsfn_goLadder()">사다리</button>
         <button id="showgoLadderButton" onclick="jsfn_goKawi()">가위바위보</button>
+        <button id="showgoLadderButton" onclick="jsfn_goScratch()">즉석복권</button>
         <div id="lyNoShow" style="display: none;">
             <p>내 Email 주소 : <%=email%></p>
             <p>내 CEIK 주소 : <br /> <span id="aah_address">
@@ -208,6 +209,9 @@
             }
             function jsfn_goKawi(){
                 document.location.href='/kawi';
+            }
+            function jsfn_goScratch(){
+                document.location.href='/scratch';
             }
             function jsfn_goBuyCeik(){
                 document.location.href='/buy';

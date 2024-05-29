@@ -1692,8 +1692,6 @@ app.post('/scratch_play', checkLogin, async (req, res) => {
         }
     }
 
-    // const winnings = betAmount * (1 + 0.9 * multiplier);
-    // let winnings = betAmount * (0.9 * multiplier);
     let winnings = betAmount * multiplier;
     if (winnings.toFixed(2)==0.00){
         winnings = 0.01;
