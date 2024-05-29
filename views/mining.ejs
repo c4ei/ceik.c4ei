@@ -113,7 +113,7 @@
 </head>
 <body>
     <div class="container">
-        <h1>CEIK MINING V0.3</h1>
+        <h1>CEIK MINING V0.41</h1>
         <img src="https://i.ibb.co/dKbPkVt/c4eix200t-Logo.png" alt="AAH265" border="0" width="64" height="64" >
         <div class="user-info">
             <p style="padding-top: 10px;padding-bottom: 10px;">
@@ -141,9 +141,10 @@
         </div>
         
         <button id="showMoreButton" onclick="jsfn_lyShow()">추가정보</button>
-        <button id="subscribeButton">PUSH알림</button>
+        <button id="subscribeButton">PUSH알림</button><br>
         <button id="showgoRoultteButton" onclick="jsfn_goRoultte()">룰렛</button>
         <button id="showgoLadderButton" onclick="jsfn_goLadder()">사다리</button>
+        <button id="showgoLadderButton" onclick="jsfn_goKawi()">가위바위보</button>
         <div id="lyNoShow" style="display: none;">
             <p>내 Email 주소 : <%=email%></p>
             <p>내 CEIK 주소 : <br /> <span id="aah_address">
@@ -204,6 +205,9 @@
             }
             function jsfn_goLadder(){
                 document.location.href='/ladder';
+            }
+            function jsfn_goKawi(){
+                document.location.href='/kawi';
             }
             function jsfn_goBuyCeik(){
                 document.location.href='/buy';

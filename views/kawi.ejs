@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>가위바위보 게임</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/css/styles.css" rel="stylesheet">
+    <style>
+        .choice-button {
+            margin: 10px;
+            width: 100px;
+            height: 100px;
+            font-size: 24px;
+        }
+        .form-inline .form-control {
+            width: auto;
+            display: inline-block;
+            vertical-align: middle;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="/">HOME</a>
+         <!-- / <a href="/ladderList">가위바위보 게임결과</a>  -->
+        <h1 class="text-center">가위바위보 게임</h1>
+        <p class="text-center">안녕하세요, <%= user.email %>님</p>
+        <p class="text-center">현재 잔액: <strong id="balance"><%= user.aah_balance %></strong></p>
+        
+        <form id="gameForm" class="text-center" action="/kawi_play" method="post">
+            <div class="form-group">
+                <label for="bet_amount" class="mr-2">베팅 금액</label>
+                <input type="number" class="form-control d-inline-block w-auto mr-2 mx-auto" name="bet_amount" id="bet_amount" min="0.01" step="1" required>
+            </div>
+            <input type="hidden" name="choice" id="choice">
+            <br> <!-- 줄 바꿈 추가 -->
+            <div class="text-center">
+                <button type="button" class="btn btn-primary choice-button" onclick="makeChoice('가위')">가위</button>
+                <button type="button" class="btn btn-secondary choice-button" onclick="makeChoice('바위')">바위</button>
+                <button type="button" class="btn btn-success choice-button" onclick="makeChoice('보')">보</button>
+            </div>
+        </form>
+
+        <div class="text-center mt-4">
+            <a href="/kawiList" class="btn btn-info">가위바위보 게임결과</a>
+        </div>
+
+        <script>
+            function makeChoice(choice) {
+                const betAmount = document.getElementById('bet_amount').value;
+                const balance = parseFloat(document.getElementById('balance').innerText);
+                if (betAmount <= 0) {
+                    alert('베팅 금액은 0보다 커야 합니다.');
+                    return;
+                }
+                if (betAmount > balance) {
+                    alert('베팅 금액이 잔액보다 큽니다.');
+                    return;
+                }
+                document.getElementById('choice').value = choice;
+                document.getElementById('gameForm').submit();
+            }
+        </script>
+    </div>
+</body>
+</html>
+

@@ -1503,6 +1503,129 @@ app.get('/ladderList', async (req, res) => {
 });
 // ######################### ladder end #########################
 
+
+// ######################### kawi start #########################
+// 로그인 체크 미들웨어
+function checkLogin(req, res, next) {
+    if (!req.session.email) {
+        res.redirect('/login');
+    } else {
+        next();
+    }
+}
+
+// 라우트 설정
+app.get('/kawi', checkLogin, async (req, res) => {
+    const userIdx = req.session.userIdx;
+    let sql_sel1 = `SELECT userIdx, email, point, aah_balance, last_spin, last_result FROM users WHERE userIdx = ${userIdx}`;
+    const user = await loadDB(sql_sel1);
+    res.render('kawi', { user: user[0] });
+});
+
+app.post('/kawi_play', checkLogin, async (req, res) => {
+    const userIdx = req.session.userIdx;
+    const userChoice = req.body.choice;
+    const betAmount = parseFloat(req.body.bet_amount);
+    
+    // 사용자 정보 가져오기
+    let sql_sel1 = `SELECT aah_balance FROM users WHERE userIdx = ${userIdx}`;
+    const user = await loadDB(sql_sel1);
+    const userBalance = parseFloat(user[0].aah_balance);
+    
+    // 베팅 금액 검증
+    if (betAmount <= 0 || betAmount > userBalance) {
+        res.redirect('/kawi');
+        return;
+    }
+
+    // 게임 통계 정보 가져오기
+    let stats = await loadDB(`SELECT * FROM kawi_statistics WHERE stat_id = 1`);
+    if (stats.length === 0) {
+        // 초기화된 기록이 없으면 새로 삽입
+        await saveDB(`INSERT INTO kawi_statistics (total_collected, total_paid) VALUES (0, 0)`);
+        stats = await loadDB(`SELECT * FROM kawi_statistics WHERE stat_id = 1`);
+    }
+    let totalCollected = parseFloat(stats[0].total_collected);
+    let totalPaid = parseFloat(stats[0].total_paid);
+
+    const choices = ["가위", "바위", "보"];
+    const computerChoice = choices[Math.floor(Math.random() * choices.length)];
+
+    // 이기고 지고 비율 조정
+    let winProbability = 0.5; // 기본 승률 50%
+    const totalGames = totalCollected + totalPaid;
+    if (totalGames > 0) {
+        winProbability = (totalPaid / totalGames) * 0.5 + 0.25;
+    }
+
+    // 승부 계산 로직
+    let result;
+    if (Math.random() < winProbability) {
+        // 사용자가 이기는 경우
+        if ((userChoice === "가위" && computerChoice === "보") ||
+            (userChoice === "바위" && computerChoice === "가위") ||
+            (userChoice === "보" && computerChoice === "바위")) {
+            result = '승리';
+        } else if (userChoice === computerChoice) {
+            result = '무승부';
+        } else {
+            result = '패배';
+        }
+    } else {
+        // 사용자가 지는 경우
+        if ((userChoice === "가위" && computerChoice === "바위") ||
+            (userChoice === "바위" && computerChoice === "보") ||
+            (userChoice === "보" && computerChoice === "가위")) {
+            result = '패배';
+        } else if (userChoice === computerChoice) {
+            result = '무승부';
+        } else {
+            result = '승리';
+        }
+    }
+
+    // 베팅 금액 및 잔액 업데이트
+    if (result === '승리') {
+        const winAmount = betAmount + (betAmount * 0.9);
+        await saveDB("UPDATE users SET aah_balance = CAST(aah_balance AS DECIMAL(22,8)) + CAST('"+winAmount+"' AS DECIMAL(22,8)) WHERE userIdx = '"+userIdx+"'");
+        totalPaid += winAmount;
+    } else if (result === '패배') {
+        await saveDB("UPDATE users SET aah_balance = CAST(aah_balance AS DECIMAL(22,8)) - CAST('"+betAmount+"' AS DECIMAL(22,8)) WHERE userIdx = '"+userIdx+"'");
+        totalCollected += betAmount;
+    }
+
+    // 게임 통계 업데이트
+    await saveDB(`UPDATE kawi_statistics SET total_collected = ${totalCollected}, total_paid = ${totalPaid} WHERE stat_id = 1`);
+
+    // 로그 저장
+    const logSQL = `INSERT INTO kawi_logs (userIdx, user_choice, computer_choice, result, bet_amount) VALUES (${userIdx}, '${userChoice}', '${computerChoice}', '${result}', ${betAmount})`;
+    await saveDB(logSQL);
+
+    // 결과 반환
+    res.render('kawi_result', { userChoice, computerChoice, result });
+});
+
+app.get('/kawiList', checkLogin, async (req, res) => {
+    const userIdx = req.session.userIdx;
+    const page = parseInt(req.query.page) || 1;
+    const limit = 10;
+    const offset = (page - 1) * limit;
+
+    // 사용자 게임 로그 가져오기
+    const logsSQL = `SELECT * FROM kawi_logs WHERE userIdx = ${userIdx} ORDER BY log_time DESC LIMIT ${limit} OFFSET ${offset}`;
+    const logs = await loadDB(logsSQL);
+
+    // 총 로그 수 가져오기
+    const countSQL = `SELECT COUNT(*) AS count FROM kawi_logs WHERE userIdx = ${userIdx}`;
+    const countResult = await loadDB(countSQL);
+    const totalLogs = countResult[0].count;
+    const totalPages = Math.ceil(totalLogs / limit);
+
+    res.render('kawiList', { logs, currentPage: page, totalPages });
+});
+
+// ######################### kawi end #########################
+
 // ######################### buyCeik KRW start #########################
 app.get('/buy', async (req, res) => {
     if (!req.session.email) {

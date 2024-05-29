@@ -1,0 +1,48 @@
+<!-- kawi_result.ejs -->
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>결과</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <!-- <link href="/css/styles.css" rel="stylesheet"> -->
+    <style>
+        .result-win {
+            font-size: 2em;
+            color: green;
+            font-weight: bold;
+        }
+        .result-lose {
+            font-size: 2em;
+            color: gray;
+            font-weight: bold;
+        }
+        .result-draw {
+            font-size: 2em;
+            color: blue;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="text-center">게임 결과</h1>
+        <div class="card text-center">
+            <div class="card-body">
+                <p class="card-text">당신의 선택: <strong><%= userChoice %></strong></p>
+                <p class="card-text">컴퓨터의 선택: <strong><%= computerChoice %></strong></p>
+                <p class="card-text
+                    <%  if (result === '승리') { %>result-win<%
+                    } else if (result === '패배') { %>result-lose<%
+                    } else { %>result-draw<% } %> 
+                    " >
+                    결과: <strong><%= result %></strong></p>
+            </div>
+        </div>
+        <div class="text-center mt-4">
+            <a href="/kawi" class="btn btn-primary">다시하기</a>
+        </div>
+    </div>
+</body>
+</html>
