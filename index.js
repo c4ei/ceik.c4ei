@@ -1626,6 +1626,105 @@ app.get('/kawiList', checkLogin, async (req, res) => {
 
 // ######################### kawi end #########################
 
+// ######################### scratch start #########################
+app.get('/scratch', checkLogin, async (req, res) => {
+    const userIdx = req.session.userIdx;
+    const sql_sel1 = `SELECT userIdx, email, point, aah_balance FROM users WHERE userIdx = ${userIdx}`;
+    const user = await loadDB(sql_sel1);
+
+    if (user.length > 0) {
+        res.render('scratch', {
+            email: user[0].email,
+            // balance: user[0].aah_balance
+            balance: parseFloat(user[0].aah_balance).toFixed(2),
+            message: '스크래치하여 상금을 확인하세요!'
+        });
+    } else {
+        res.redirect('/login');
+    }
+});
+
+app.post('/scratch_play', checkLogin, async (req, res) => {
+    const userIdx = req.session.userIdx;
+
+    let balance = await jsfn_getDB_AAH(userIdx);
+
+    // 1 CEIK 차감
+    const betAmount = 1;
+    if (parseFloat(balance) < betAmount) {
+        // return res.status(400).json({ message: '잔액이 부족합니다.' });
+        let _errAlert = "<script>alert('잔액이 부족합니다.');document.location.href='/';</script>";
+        res.send(_errAlert);
+        return;
+    }
+
+    // balance -= betAmount;
+    await saveDB("UPDATE users SET aah_balance=CAST(aah_balance AS DECIMAL(22,8))-CAST('"+betAmount+"' AS DECIMAL(22,8)) WHERE userIdx = '"+userIdx+"'");
+    // mininglog 테이블에 기록
+    const _memo = `즉석복권 구매 ${betAmount}`;
+    let user_ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress || req.socket.remoteAddress || req.connection.socket.remoteAddress;
+    await saveDB(`INSERT INTO mininglog (userIdx, aah_balance, regdate, regip, memo) VALUES ('${userIdx}', '${betAmount}', NOW(), '${user_ip}', '${_memo}')`);
+
+    // 당첨 확률 세분화
+    const probabilities = {
+        100000: 0.01, // 1% 확률
+        50000: 0.02,  // 2% 확률
+        10000: 0.05,  // 5% 확률
+        5000: 0.1,    // 10% 확률
+        1000: 0.2,    // 20% 확률
+        500: 0.3,     // 30% 확률
+        100: 0.5,     // 50% 확률
+        50: 0.7,      // 70% 확률
+        1: 0.9,       // 90% 확률
+        0.1: 0.99     // 99% 확률
+    };
+
+    let result = '패배';
+    let multiplier = 0; // 승수
+
+    for (const [ceik, prob] of Object.entries(probabilities)) {
+        let _rndNum = Math.random();
+        // console.log("_rndNum : " + _rndNum +" / prob : " + prob);
+        if (_rndNum < prob) {
+            result = '승리';
+            multiplier = ceik / 100000;
+            break;
+        }
+    }
+
+    // const winnings = betAmount * (1 + 0.9 * multiplier);
+    // let winnings = betAmount * (0.9 * multiplier);
+    let winnings = betAmount * multiplier;
+    if (winnings.toFixed(2)==0.00){
+        winnings = 0.01;
+    }
+    const message = result === '승리' ? `축하합니다! ${winnings.toFixed(2)} CEIK를 받으셨습니다! ` : '다음 기회에!';
+
+    // 승리 시 원금 + 90% 지급
+    if (result === '승리') {
+        // balance += winnings;
+        const _memo2 = `즉석복권 승리 ${winnings}`;
+        await saveDB(`INSERT INTO mininglog (userIdx, aah_balance, regdate, regip, memo) VALUES ('${userIdx}', '${winnings}', NOW(), '${user_ip}', '${_memo2}')`);
+        await saveDB("UPDATE users SET aah_balance=CAST(aah_balance AS DECIMAL(22,8)) + CAST('"+winnings+"' AS DECIMAL(22,8)) WHERE userIdx='"+userIdx+"'");
+    }
+
+    // 회수한 금액 및 지급한 금액 업데이트
+    if (result === '패배') {
+        await saveDB(`UPDATE scratch_statistics SET total_collected = total_collected + ${betAmount} WHERE id = 1`);
+        // 로그 저장
+        await saveDB(`INSERT INTO scratch_log (userIdx, result, qty) VALUES ('${userIdx}', '${result}', '${betAmount}')`);
+    } else {
+        await saveDB(`UPDATE scratch_statistics SET total_paid = total_paid + ${winnings} WHERE id = 1`);
+        // 로그 저장
+        await saveDB(`INSERT INTO scratch_log (userIdx, result, qty) VALUES ('${userIdx}', '${result}', '${winnings}')`);
+    }
+
+    let _aah_balance = await jsfn_getDB_AAH(userIdx);
+    res.json({ message, balance: parseFloat(_aah_balance).toFixed(2) });
+});
+
+// ######################### scratch end #########################
+
 // ######################### buyCeik KRW start #########################
 app.get('/buy', async (req, res) => {
     if (!req.session.email) {

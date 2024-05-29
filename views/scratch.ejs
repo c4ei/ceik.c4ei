@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>스크래치 복권</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .scratch-card {
+            width: 300px;
+            height: 200px;
+            border: 1px solid #ccc;
+            position: relative;
+            background: gray;
+            cursor: pointer;
+        }
+        .scratch-card.revealed {
+            background: white;
+            cursor: default;
+        }
+        .scratch-message {
+            font-size: 1.5em;
+            text-align: center;
+            padding: 70px 0;
+            display: none;
+        }
+        .scratch-card.revealed .scratch-message {
+            display: block;
+        }
+        .probability-table {
+            margin: 20px auto;
+            width: 80%;
+        }
+        .probability-table th, .probability-table td {
+            text-align: center;
+            padding: 10px;
+            border: 1px solid #ddd;
+        }
+        .probability-table th {
+            background-color: #f8f9fa;
+        }
+        .probability-table {
+            background-color: white;
+            border-collapse: collapse;
+        }
+    </style>
+</head>
+<body>
+    <div class="container text-center">
+        <h1 class="mt-4">스크래치 복권 게임</h1>
+        <div class="mb-4">
+            <p>로그인한 사용자: <%= email %></p>
+            <p>현재 잔액: <%= balance %> CEIK</p>
+        </div>
+        <span style="text-align: center;width:100%;">
+            <div id="scratchCard" class="scratch-card mt-4">
+                <div id="scratchMessage" class="scratch-message"></div>
+            </div>
+        </span>
+        <div class="mt-4">
+            <button id="playAgainBtn" class="btn btn-primary" style="display: none;" onclick="location.href='/scratch';">다시 하기</button>
+        </div>
+        <div class="card mt-4">
+            <div class="card-header">
+                당첨 확률 및 금액
+            </div>
+            <div class="card-body">
+                <table class="probability-table table table-bordered">
+                    <thead>
+                        <tr>
+                            <th>등수</th>
+                            <th>당첨 금액 (CEIK)</th>
+                            <th>확률</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>1등</td>
+                            <td>100000 CEIK</td>
+                            <td>1%</td>
+                        </tr>
+                        <tr>
+                            <td>2등</td>
+                            <td>50000 CEIK</td>
+                            <td>2%</td>
+                        </tr>
+                        <tr>
+                            <td>3등</td>
+                            <td>10000 CEIK</td>
+                            <td>5%</td>
+                        </tr>
+                        <tr>
+                            <td>4등</td>
+                            <td>5000 CEIK</td>
+                            <td>10%</td>
+                        </tr>
+                        <tr>
+                            <td>5등</td>
+                            <td>1000 CEIK</td>
+                            <td>20%</td>
+                        </tr>
+                        <tr>
+                            <td>6등</td>
+                            <td>500 CEIK</td>
+                            <td>30%</td>
+                        </tr>
+                        <tr>
+                            <td>7등</td>
+                            <td>100 CEIK</td>
+                            <td>50%</td>
+                        </tr>
+                        <tr>
+                            <td>8등</td>
+                            <td>50 CEIK</td>
+                            <td>70%</td>
+                        </tr>
+                        <tr>
+                            <td>9등</td>
+                            <td>1 CEIK</td>
+                            <td>90%</td>
+                        </tr>
+                        <tr>
+                            <td>10등</td>
+                            <td>0.01 CEIK</td>
+                            <td>99%</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        document.getElementById('scratchCard').addEventListener('click', async function() {
+            const response = await fetch('/scratch_play', { method: 'POST' });
+            const result = await response.json();
+
+            const scratchCard = document.getElementById('scratchCard');
+            const scratchMessage = document.getElementById('scratchMessage');
+            const playAgainBtn = document.getElementById('playAgainBtn');
+
+            scratchMessage.textContent = result.message;
+            scratchCard.classList.add('revealed');
+            playAgainBtn.style.display = 'inline-block';
+        });
+    </script>
+</body>
+</html>
