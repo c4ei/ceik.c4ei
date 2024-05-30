@@ -12,13 +12,15 @@
     <link rel="apple-touch-icon" href="/favicon.ico" />
     <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico" />
     <title>CEIK MINING</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">
     <style>
         #MiningQty {
-            font-size: 48px;
+            font-size: 40px;
             transition: color 0.2s ease-in-out;
+            padding: 5px 5px 5px 5px;
         }
         body {
-            font-family: Arial, sans-serif;
+            font-family: 'Noto Sans KR', sans-serif;
             margin: 0;
             padding: 0;
             display: flex;
@@ -110,6 +112,31 @@
             display: block;
         }
     </style>
+    <style>
+        #announcement {
+            overflow: hidden;
+            white-space: nowrap;
+        }
+    
+        .scrolling-text {
+            display: inline-block;
+            padding-left: 80%;
+            animation: scroll 15s linear infinite;
+            color: aliceblue;
+        }
+        #announcementTitle a {
+            color: white;
+        }
+    
+        @keyframes scroll {
+            0% {
+                transform: translateX(100%);
+            }
+            100% {
+                transform: translateX(-100%);
+            }
+        }
+    </style>
 </head>
 <body>
     <div class="container">
@@ -192,15 +219,17 @@
         
         <h1 id="MiningQty">0.0000000001</h1> 
         <button id="startButton">채굴시작</button>
-        <button id="accumulateButton">적립</button>
+        <button id="accumulateButton" title="※적립버튼은 2시간마다 클릭 가능합니다.">적립</button>
         <button id="makeLinkButton">초대링크생성</button>
         <button id="makePartyButton">파티</button>
         <input type="hidden" id="email" value="<%=email%>" />
         <input type="hidden" id="userIdx" value="<%=userIdx%>" />
-        <br />※적립버튼은 2시간마다 클릭 가능합니다.
-
+        <!-- <br /> -->
         <div id="clock">2:00:00</div>
-           
+        <br>
+        <div id="announcement" style="display:none;">
+            <div class="scrolling-text" id="announcementTitle"></div>
+        </div>
         <script>
             function jsfn_goBBS(){
                 document.location.href='/bbs_list';
@@ -477,6 +506,27 @@
                 console.error('Service workers are not supported in this browser');
             }
         });
+    </script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const announcement = document.getElementById('announcement');
+            const announcementTitle = document.getElementById('announcementTitle');
+            
+            // 서버로부터 공지 사항을 가져옴
+            fetch('/get_announcement')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.title && data.content) {
+                        const _date = "[" + new Date(data.created_at).toISOString().slice(2, 10).replace(/-/g, ".") + "]";
+                        announcementTitle.innerHTML = `<a href="javascript:goToPost(${data.id})">${_date} ${data.title}</a>`;
+                        announcement.style.display = 'block';
+                    }
+                });
+        });
+    
+        function goToPost(id) {
+            window.location.href = `/bbs_view/${id}`;
+        }
     </script>
 <form id="f_mining" name="f_mining" method="post">
     <input type="hidden" id="f_aah_balance" name="f_aah_balance" />
