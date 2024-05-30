@@ -60,6 +60,11 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
+            let _cur_balance = "<%= balance %>";
+            if( parseFloat(_cur_balance)<1){
+                alert('스크래치 복권 진행에는 1 CEIK 가 필요합니다. 잔액이 부족합니다.');
+                return;
+            }
             const scratchCard = document.getElementById('scratchCard');
             const scratchMessage = document.getElementById('scratchMessage');
             const playAgainBtn = document.getElementById('playAgainBtn');
@@ -68,7 +73,7 @@
             let isDrawing = false;
             let revealedArea = 0;
             let isRequestSent = false; // 추가: 요청이 진행 중인지 추적
-    
+
             // Set up canvas
             scratchOverlay.width = scratchCard.clientWidth;
             scratchOverlay.height = scratchCard.clientHeight;

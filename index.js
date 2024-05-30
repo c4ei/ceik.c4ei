@@ -420,14 +420,15 @@ app.get('/signup', (req, res) => {
 });
 
 app.post('/signup', async (req, res) => {
-    const { email, password } = req.body;
+    let { email, password } = req.body;
     if (!email || !password) {
         // return res.status(400).send('EMAIL과 비밀번호를 모두 입력해주세요.');
         err_msg= err_msg +"EMAIL과 비밀번호를 모두 입력해주세요.";
         res.render('error', { err_msg:err_msg});
         return;
     }
-
+    email = jsfnRepSQLinj(email);
+    password = jsfnRepSQLinj(password);
     let sql0 = "SELECT count(userIdx) cnt FROM users WHERE email='"+email+"'" ;
     let result0 = await loadDB(sql0);
     let _cnt = result0[0].cnt;
@@ -437,8 +438,6 @@ app.post('/signup', async (req, res) => {
         res.send(_errAlert);
         return;
     }
-    // email = jsfnRepSQLinj(email);
-    // password = jsfnRepSQLinj(password);
 
     const hashedPassword = await bcrypt.hash(password, 10);
     const newUser = { email, password: hashedPassword };
@@ -498,7 +497,7 @@ app.get('/join', (req, res) => {
 });
 
 app.post('/joinok', async (req, res) => {
-    const { code, email, password, fid } = req.body;
+    let { code, email, password, fid } = req.body;
     let err_msg="";
     if (!code || !email || !password || !fid) {
         // return res.status(400).send('코드, EMAIL, 비밀번호가 필요합니다.');
@@ -506,10 +505,10 @@ app.post('/joinok', async (req, res) => {
         res.render('error', { err_msg:err_msg});
         return;
     }
-    // code = jsfnRepSQLinj(code);
-    // email = jsfnRepSQLinj(email);
-    // password = jsfnRepSQLinj(password);
-    // fid = jsfnRepSQLinj(fid);
+    code = jsfnRepSQLinj(code);
+    email = jsfnRepSQLinj(email);
+    password = jsfnRepSQLinj(password);
+    fid = jsfnRepSQLinj(fid);
 
     // let reg_idx = await fn_getIdFromEmail(email);
     // if(reg_idx>0){
@@ -715,10 +714,10 @@ app.post('/partymemberjoinok', async (req, res) => {
 // 데이터베이스 시뮬레이션용 변수
 // let accumulatedPoints = 0;
 app.post('/accumulate', async (req, res) => {
-    const { m_miningQty, m_userIdx , m_email } = req.body;
-    // MiningQty = jsfnRepSQLinj(MiningQty);
-    // userIdx = jsfnRepSQLinj(userIdx);
-    // email = jsfnRepSQLinj(email);
+    let { m_miningQty, m_userIdx , m_email } = req.body;
+    m_miningQty = jsfnRepSQLinj(m_miningQty);
+    m_userIdx = jsfnRepSQLinj(m_userIdx);
+    m_email = jsfnRepSQLinj(m_email);
     let err_msg="";
     let chk_email = req.session.email;
     let chk_userIdx = req.session.userIdx;
@@ -773,10 +772,10 @@ app.post('/accumulate', async (req, res) => {
 });
 
 app.post('/sendAAH', async (req, res) => {
-    const { f_aah_balance , f_userIdx , f_email } = req.body;
-    // MiningQty = jsfnRepSQLinj(MiningQty);
-    // userIdx = jsfnRepSQLinj(userIdx);
-    // email = jsfnRepSQLinj(email);
+    let { f_aah_balance , f_userIdx , f_email } = req.body;
+    f_aah_balance = jsfnRepSQLinj(f_aah_balance);
+    f_userIdx = jsfnRepSQLinj(f_userIdx);
+    f_email = jsfnRepSQLinj(f_email);
     let err_msg="";
     let chk_email = req.session.email;
     let chk_userIdx = req.session.userIdx;
@@ -1745,8 +1744,8 @@ app.get('/get_comments/:bbs_id', checkLogin, async (req, res) => {
 // 댓글 추가하기
 app.post('/add_comment', express.json(), async (req, res) => {
     let { bbs_id, content } = req.body;
-    // bbs_id = jsfnRepSQLinj(bbs_id);
-    // content = jsfnRepSQLinj(content);
+    bbs_id = jsfnRepSQLinj(bbs_id);
+    content = jsfnRepSQLinj(content);
     if (!req.session.email) {
         res.json({ message: 'Need Login first' });
         return;
@@ -2266,9 +2265,10 @@ function jsfn_decrypt(encrypted) {
   return decrypted;
 }
 
-function jsfnRepSQLinj(str){
-    str = str.replace('\'','`');
-    str = str.replace('--','');
+function jsfnRepSQLinj(str) {
+    if (typeof str !== 'string') return str; // 문자열 타입이 아닌 경우 그대로 반환
+    str = str.replace(/'/g, '`'); // 모든 '을 `로 대체
+    str = str.replace(/--/g, ''); // 모든 --을 제거
     return str;
-  }
+}
 // fn_makeAddress();
