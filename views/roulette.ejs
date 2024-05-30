@@ -49,12 +49,12 @@
             width: 100%;
             height: 100%;
             border-radius: 50%;
-            transition: transform 4s ease-out;
+            transition: transform 1s ease-out; /* Increase spin speed */
         }
 
         .pointer {
-            width: 0;
-            height: 0;
+            width: 20px;
+            height: 20px;
             border-left: 20px solid transparent;
             border-right: 20px solid transparent;
             border-top: 20px solid red;
@@ -70,55 +70,21 @@
             }
         }
 
-        /* body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            background-color: #f0f0f0;
+        .result {
+            margin-top: 20px;
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #333;
+            opacity: 0;
+            transition: opacity 0.5s ease-in-out;
         }
 
-        .container {
-            background-color: #fff;
-            border-radius: 8px;
-            padding: 20px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-            text-align: center;
+        .show {
+            opacity: 1;
         }
-        .roulette-container {
-            position: relative;
-            width: 300px;
-            height: 300px;
-            margin: auto;
+        .hidden {
+            display: none;
         }
-        .roulette {
-            width: 100%;
-            height: 100%;
-            border-radius: 50%;
-            border: 10px solid #ccc;
-            overflow: hidden;
-            position: relative;
-        }
-        .roulette img {
-            width: 100%;
-            height: 100%;
-            border-radius: 50%;
-            transition: transform 4s ease-out;
-        }
-        .pointer {
-            width: 0;
-            height: 0;
-            border-left: 20px solid transparent;
-            border-right: 20px solid transparent;
-            border-top: 20px solid red;
-            position: absolute;
-            top: 1px;
-            left: 52%;
-            transform: translateX(-50%);
-        } */
     </style>
 </head>
 <body>
@@ -130,10 +96,11 @@
         <p>AAH Balance: <%= user.aah_balance %></p>
         <!-- <p>아직 개발중이며 서버결과를 룰렛 화면에서 안맞는 <br/>부분 수정중입니다(__)ㅋ
             (버그 수정시 이 문구 없어 집니다.)</p> -->
-        <div class="roulette-container">
+        <div id="resultText" class="result"></div> <!-- 결과 텍스트를 룰렛 컨테이너 위로 이동 -->
+        <div class="roulette-container" id="rouletteContainer">
             <div class="roulette">
                 <img src="/roulette.png" id="rouletteImage" />
-                <div class="pointer"></div>
+                <div class="pointer">&nbsp;</div>
             </div>
         </div>
         <br /><br /><br />
@@ -184,10 +151,22 @@
                 rouletteImage.style.transition = 'transform 4s ease-out';
                 rouletteImage.style.transform = `rotate(${totalAngle}deg)`;
     
+                // setTimeout(() => {
+                //     alert(`You won: ${result}`);
+                //     location.reload();
+                // }, 4000); // 전환 시간과 일치시킴
                 setTimeout(() => {
-                    alert(`You won: ${result}`);
-                    location.reload();
-                }, 4000); // 전환 시간과 일치시킴
+                    const resultText = document.getElementById('resultText');
+                    const rouletteContainer = document.getElementById('rouletteContainer');
+                    rouletteContainer.classList.add('hidden'); // 룰렛 숨기기
+                    resultText.innerText = `You won: ${result}`;
+                    resultText.classList.add('show');
+                    
+                    setTimeout(() => {
+                        resultText.classList.remove('show');
+                        rouletteContainer.classList.remove('hidden'); // 룰렛 다시 보이기
+                    }, 5000); // 5초 후에 결과 텍스트를 숨김
+                }, 1000); // Adjust to match the spin duration
             })
             .catch(error => console.error('Error:', error));
         }

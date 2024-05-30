@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BBS List</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            background-color: #f0f0f0;
+        }
+        .container {
+            width: 90%;
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        .no-content {
+            text-align: center;
+            color: #777;
+            font-size: 1.2em;
+            margin-top: 50px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            padding: 10px;
+            border: 1px solid #ddd;
+            text-align: center;
+        }
+        th {
+            background-color: #f8f8f8;
+        }
+        tr {
+            cursor: pointer;
+        }
+        tr:hover {
+            background-color: #f1f1f1;
+        }
+        .pagination {
+            margin-top: 20px;
+            text-align: center;
+        }
+        .pagination a {
+            margin: 0 5px;
+            padding: 8px 12px;
+            text-decoration: none;
+            color: #007BFF;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            transition: background-color 0.3s, color 0.3s;
+        }
+        .pagination a.active {
+            background-color: #007BFF;
+            color: #fff;
+            border: 1px solid #007BFF;
+        }
+        .pagination a:hover:not(.active) {
+            background-color: #ddd;
+        }
+        @media (max-width: 600px) {
+            th, td {
+                font-size: 0.9em;
+            }
+        }
+    </style>
+    <script>
+        function goToPost(id) {
+            window.location.href = `/bbs_view/${id}`;
+        }
+    </script>
+</head>
+<body>
+    <div class="container">
+        <div class="navigation">
+            <a href="/">HOME</a> / <a href="/bbs_write">쓰기</a>
+        </div>
+        <% if (posts.length === 0) { %>
+            <div class="no-content">내용이 없습니다.</div>
+        <% } else { %>
+            <table>
+                <thead>
+                    <tr>
+                        <th>번호</th>
+                        <th>제목</th>
+                        <th>날짜</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% posts.forEach(function(post, index) { %>
+                        <tr onclick="goToPost(<%= post.id %>)">
+                            <td><%= (currentPage - 1) * 10 + index + 1 %></td>
+                            <td><%= post.title %></td>
+                            <td><%= new Date(post.created_at).toISOString().slice(2, 10).replace(/-/g, ".") %></td>
+                        </tr>
+                    <% }) %>
+                </tbody>
+            </table>
+            <div class="pagination">
+                <% for (let i = 1; i <= totalPages; i++) { %>
+                    <a href="?page=<%= i %>" class="<%= i === currentPage ? 'active' : '' %>"><%= i %></a>
+                <% } %>
+            </div>
+        <% } %>
+    </div>
+</body>
+</html>

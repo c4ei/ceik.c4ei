@@ -1735,23 +1735,73 @@ app.get('/get_announcement', async (req, res) => {
 });
 
 // 댓글 가져오기
-app.get('/get_comments/:bbs_id', async (req, res) => {
+app.get('/get_comments/:bbs_id', checkLogin, async (req, res) => {
     const bbsId = req.params.bbs_id;
-    const sql = "SELECT * FROM bbs_comments WHERE bbs_id = '"+bbsId+"' ORDER BY created_at DESC";
-    const bbs_comment = await loadDB(sql);
-    if (bbs_comment.length > 0) {
-        res.json(bbs_comment[0]);
-    }
+    const sql = `SELECT * FROM bbs_comments WHERE bbs_id = '${bbsId}' ORDER BY created_at DESC`;
+    const comments = await loadDB(sql);
+    res.json(comments);
 });
 
 // 댓글 추가하기
 app.post('/add_comment', express.json(), async (req, res) => {
     let { bbs_id, content } = req.body;
-    bbs_id = jsfnRepSQLinj(bbs_id);
-    content = jsfnRepSQLinj(content);
-    const sql = "INSERT INTO bbs_comments (bbs_id, content) VALUES ('"+bbs_id+"', '"+content+"')";
+    // bbs_id = jsfnRepSQLinj(bbs_id);
+    // content = jsfnRepSQLinj(content);
+    if (!req.session.email) {
+        res.json({ message: 'Need Login first' });
+        return;
+    }
+    const userIdx = req.session.userIdx;
+    const sql = "INSERT INTO bbs_comments (bbs_id, userIdx, content) VALUES ('" + bbs_id + "','" + userIdx + "', '" + content + "')";
     await saveDB(sql);
     res.json({ message: 'Comment added successfully.' });
+});
+
+// 게시물 리스트 가져오기 (페이징 포함)
+app.get('/bbs_list', checkLogin, async (req, res) => {
+    const page = parseInt(req.query.page) || 1;
+    const limit = 10;
+    const offset = (page - 1) * limit;
+
+    // SQL 쿼리 문자열 생성
+    const sql = `SELECT * FROM bbs WHERE GUBUN='2' ORDER BY created_at DESC LIMIT ${limit} OFFSET ${offset}`;
+    const posts = await loadDB(sql);
+    const countSql = `SELECT COUNT(*) AS count FROM bbs`;
+    const countResult = await loadDB(countSql);
+    const totalPosts = countResult[0].count;
+    const totalPages = Math.ceil(totalPosts / limit);
+
+    res.render('bbs_list', { posts, totalPages, currentPage: page });
+});
+
+// 게시물 상세 보기
+app.get('/bbs_view/:bbs_id', checkLogin, async (req, res) => {
+    const bbsId = req.params.bbs_id;
+    const postSql = `SELECT * FROM bbs WHERE id = '${bbsId}'`;
+    const commentSql = `SELECT * FROM bbs_comments WHERE bbs_id = '${bbsId}' ORDER BY created_at DESC`;
+    const post = await loadDB(postSql);
+    const comments = await loadDB(commentSql);
+
+    if (post.length > 0) {
+        res.render('bbs_view', { post: post[0], comments });
+    } else {
+        res.render('bbs_view', { message: 'Post not found', post: null, comments: [] });
+    }
+});
+
+// 게시물 작성 페이지 렌더링
+app.get('/bbs_write', checkLogin, (req, res) => {
+    res.render('bbs_write');
+});
+
+// 게시물 작성하기
+app.post('/bbs_write', checkLogin, async (req, res) => {
+    let { title, content } = req.body;
+    const userIdx = req.session.userIdx;
+    const sql = "INSERT INTO bbs (userIdx, title, content, created_at) VALUES ('" + userIdx + "','" + title + "', '" + content + "', NOW())";
+    await saveDB(sql);
+    // res.render('bbs_write', { message: 'Post created successfully.' });
+    res.json({ message: 'Post created successfully.' });
 });
 // ######################### notice end #########################
 

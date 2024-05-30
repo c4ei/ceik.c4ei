@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>게시물 상세 보기</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f0f0f0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 800px;
+            width: 90%;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: #fff;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+        }
+        .post-title {
+            font-size: 1.8em;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+        .post-date {
+            color: #999;
+            font-size: 0.9em;
+            margin-bottom: 20px;
+        }
+        .post-content {
+            font-size: 1em;
+            line-height: 1.6;
+            margin-bottom: 30px;
+        }
+        .comments {
+            margin-top: 30px;
+        }
+        .comment {
+            border-bottom: 1px solid #ddd;
+            padding: 10px 0;
+        }
+        .comment:last-child {
+            border-bottom: none;
+        }
+        .comment-date {
+            color: #999;
+            font-size: 0.8em;
+            margin-top: 5px;
+        }
+        textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin-bottom: 10px;
+            font-family: 'Noto Sans KR', sans-serif;
+        }
+        button {
+            display: block;
+            width: 100%;
+            padding: 10px;
+            background-color: #007BFF;
+            border: none;
+            border-radius: 4px;
+            color: #fff;
+            font-size: 1em;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .links {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+        }
+        .links a {
+            color: #007BFF;
+            text-decoration: none;
+        }
+        .links a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <% if (post) { %>
+            <h1 class="post-title"><%= post.title %></h1>
+            <p class="post-date"><%= new Date(post.created_at).toISOString().slice(2, 10).replace(/-/g, ".") %></p>
+            <div class="post-content"><%- post.content.replace(/\n/g, '<br>') %></div> <!--- <%- %>는 EJS에서 HTML을 이스케이프하지 않고 그대로 출력 --->
+            <div class="comments">
+                <h2>댓글</h2>
+                <div id="commentList">
+                    <% comments.forEach(comment => { %>
+                        <div class="comment">
+                            <p><%= comment.content %></p>
+                            <p class="comment-date"><%= new Date(comment.created_at).toISOString().slice(2, 10).replace(/-/g, ".") %></p>
+                        </div>
+                    <% }); %>
+                </div>
+                <form id="commentForm">
+                    <textarea id="commentContent" name="content" rows="4" placeholder="댓글을 입력하세요"></textarea>
+                    <button type="button" onclick="submitComment(<%= post.id %>)">댓글 작성</button>
+                </form>
+            </div>
+        <% } else { %>
+            <h1>Post Not Found</h1>
+        <% } %>
+        <div class="links">
+            <a href="/">HOME</a>
+            <!-- <a href="/bbs_write">글쓰기</a> -->
+            <a href="/bbs_list">글목록</a>
+        </div>
+    </div>
+    <script>
+        async function submitComment(bbsId) {
+            const content = document.getElementById('commentContent').value;
+            if (!content.trim()) {
+                alert('댓글 내용을 입력하세요.');
+                return;
+            }
+            const response = await fetch('/add_comment', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ bbs_id: bbsId, content: content })
+            });
+            const result = await response.json();
+            if (result.message === 'Comment added successfully.') {
+                // 댓글 목록 갱신
+                const commentList = document.getElementById('commentList');
+                const commentElement = document.createElement('div');
+                commentElement.classList.add('comment');
+                commentElement.innerHTML = `
+                    <p>${content}</p>
+                    <p class="comment-date">${new Date().toISOString().slice(2, 10).replace(/-/g, ".")}</p>
+                `;
+                commentList.insertBefore(commentElement, commentList.firstChild);
+                document.getElementById('commentContent').value = '';
+            } else {
+                alert('댓글 작성에 실패했습니다.');
+            }
+        }
+    </script>
+</body>
+</html>

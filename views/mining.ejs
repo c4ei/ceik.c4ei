@@ -127,6 +127,7 @@
                 <% if (userIdx==40||userIdx==52){ %>
                 <button id="goBuyCeikListButton" onclick="jsfn_goBuyCeikList()"> 구매 LIST</button>
                 <% } %>
+                <button id="goBbsButton" onclick="jsfn_goBBS()">게시판</button>
                 <br />
                 내 추천인 수 : <%=reffer_cnt%> <% if (reffer_cnt>0){ %><font color="red">Hash+</font><% } %>
                 /
@@ -201,6 +202,9 @@
         <div id="clock">2:00:00</div>
            
         <script>
+            function jsfn_goBBS(){
+                document.location.href='/bbs_list';
+            }
             function jsfn_goRoultte(){
                 document.location.href='/roulette';
             }
