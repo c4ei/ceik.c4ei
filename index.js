@@ -7,6 +7,19 @@ const dotenv = require('dotenv');
 const cors = require("cors");
 const i18n = require('./i18n.js.config');
 // i18n.__('settings_command_menu_sett')
+/*
+const i18n = require('i18n');
+const path = require('path');
+i18n.configure({
+    locales: ['en', 'ko', 'jp', 'ru', 'cn'],
+    directory: path.join(__dirname, 'locales'),
+    defaultLocale: 'ko',
+    cookie: 'lang',
+    queryParameter: 'lang'
+});
+
+app.use(i18n.init);
+*/
 const bodyParser = require('body-parser');
 const webpush = require('web-push');
 const cron = require('node-cron');
