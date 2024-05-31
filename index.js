@@ -313,7 +313,6 @@ app.get('/', async (req, res) => {
             _duration = boosters[0].duration;
             _active = boosters[0].active;
         }
-
         res.render('mining', {
             email: _email, userIdx: _userIdx,
             party_mem_cnt: _party_mem_cnt,
@@ -328,6 +327,7 @@ app.get('/', async (req, res) => {
             Qty_CeikPerSec: Qty_CeikPerSec,
             level : _level,exp : _exp, point: _point,
             boost_id:_boost_id,bname:_bname, multiplier:_multiplier, duration:_duration, active:_active
+            ,locale: req.getLocale()
         });
     }
 });
