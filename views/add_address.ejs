@@ -69,16 +69,16 @@ button:hover {
             <!-- <p>초대 코드:</p> -->  
             <form name="form_addr" id="form_addr" method="POST">
                 <div class="form-group">
-                    <label for="user_add_addr">입금 주소:</label>
+                    <label for="user_add_addr"><%= __("text_5") %></label>
                     <input type="text" class="form-control" id="user_add_addr" name="user_add_addr" value="<%=user_add_addr%>" required maxlength="63">
                 </div>
                 <br/>
                 <font color="red">
-                    ※입금 주소를 추가 하면 추가한 입금 주소로 CEIK 가 전송 됩니다.<br/>
+                    <%= __("text_6") %><br/>
                     ※If you add a deposit address, <br/>CEIK will be sent to the added deposit address..
                 </font>
                 <br/><br/>
-                <button type="button" onclick="jsfn_submit();" class="btn btn-primary btn-block">입금 주소 추가 하기</button>
+                <button type="button" onclick="jsfn_submit();" class="btn btn-primary btn-block"><%= __("text_9") %></button>
             </form>
         </div>
     </div>

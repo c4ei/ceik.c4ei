@@ -139,40 +139,48 @@
 </head>
 <body>
     <div class="container">
-        <h1>CEIK MINING V0.5</h1>
+        <h1>CEIK MINING V0.6</h1>
         <img src="https://i.ibb.co/dKbPkVt/c4eix200t-Logo.png" alt="AAH265" border="0" width="64" height="64" >
         <div class="user-info">
             <p style="padding-top: 10px;padding-bottom: 10px;">
                 Level : <%= level %> / EXP : <%= exp %> / POINT : <%= point %>
                 <br />
-                전송가능 CEIK 수량 : 
+                <%= __("text_88") %><!-- 전송가능 CEIK 수량 :  -->
                 <span id="accumulatedCount"><%=aah_balance%></span>
-                <button id="sendAAHButton" style="width: 50px;height: 26px;padding: 2px 2px 2px 2px;background-color: chartreuse;color: #ff0000;">전송</button>
+                <button id="sendAAHButton" style="width: 50px;height: 26px;padding: 2px 2px 2px 2px;background-color: chartreuse;color: #ff0000;">
+                    <!-- 전송 -->
+                    <%= __("text_174") %>
+                </button>
                 <br />
-                <button id="goBuyCeikButton" onclick="jsfn_goBuyCeik()">전송가능 CEIK 구매</button>
+                <button id="goBuyCeikButton" onclick="jsfn_goBuyCeik()">
+                    <%= __("text_175") %>
+                    <!-- 전송가능 CEIK 구매 -->
+                </button>
                 <% if (userIdx==40||userIdx==52){ %>
-                <button id="goBuyCeikListButton" onclick="jsfn_goBuyCeikList()"> 구매 LIST</button>
+                <button id="goBuyCeikListButton" onclick="jsfn_goBuyCeikList()"> <%= __("text_176") %> <!-- 구매 LIST --> </button>
                 <% } %>
-                <button id="goBbsButton" onclick="jsfn_goBBS()">게시판</button>
+                <button id="goBbsButton" onclick="jsfn_goBBS()"> <%= __("text_177") %> <!-- 게시판 --> </button>
                 <br />
-                내 추천인 수 : <%=reffer_cnt%> <% if (reffer_cnt>0){ %><font color="red">Hash+</font><% } %>
-                /
-                내 파티원 수 : <%=party_mem_cnt%> <% if (party_mem_cnt>0){ %> <font color="red">Hash+</font> <% } %>
+                <!-- 내 추천인 수 :  -->
+                <%= __("text_178") %> <%=reffer_cnt%> <% if (reffer_cnt>0){ %><font color="red">Hash+</font><% } %>
+                / <!-- 내 파티원 수 :  -->
+                <%= __("text_180") %> <%=party_mem_cnt%> <% if (party_mem_cnt>0){ %> <font color="red">Hash+</font> <% } %>
                 <br />
                 <%if (bname!=""){ %>
-                    <%= bname %> (배속: <%= multiplier %>, Duration: <%= duration %> sec) 
+                    <%= bname %> (
+                        <!-- 배속:  --><%= __("text_181") %> <%= multiplier %>, Duration: <%= duration %> sec) 
                     <a href="javascript:jsfn_useBoost('<%=boost_id%>','<%=bname%>')"><img src="/boost.png" alt="boost" border="0" width="32" height="32" style="vertical-align: bottom;"></a>
                     </a>
                 <% } %> 
             </p>
         </div>
         
-        <button id="showMoreButton" onclick="jsfn_lyShow()">추가정보</button>
-        <button id="subscribeButton">PUSH알림</button>
-        <button id="showgoRoultteButton" onclick="jsfn_goRoultte()">룰렛</button><br>
-        <button id="showgoLadderButton" onclick="jsfn_goLadder()">사다리</button>
-        <button id="showgoLadderButton" onclick="jsfn_goKawi()">가위바위보</button>
-        <button id="showgoLadderButton" onclick="jsfn_goScratch()">즉석복권</button>
+        <button id="showMoreButton" onclick="jsfn_lyShow()"><!-- 추가정보 --> <%= __("text_183") %> </button>
+        <button id="subscribeButton"><!-- PUSH알림 --> <%= __("text_184") %> </button>
+        <button id="showgoRoultteButton" onclick="jsfn_goRoultte()"><%= __("text_185") %> <!-- 룰렛 --></button><br>
+        <button id="showgoLadderButton" onclick="jsfn_goLadder()"><%= __("text_186") %> <!-- 사다리 --></button>
+        <button id="showgoLadderButton" onclick="jsfn_goKawi()"><!-- 가위바위보 --><%= __("text_187") %> </button>
+        <button id="showgoLadderButton" onclick="jsfn_goScratch()"><!-- 즉석복권 --><%= __("text_188") %> </button>
         <div id="lyNoShow" style="display: none;">
             <p>내 Email 주소 : <%=email%></p>
             <p>내 CEIK 주소 : <br /> <span id="aah_address">
@@ -217,10 +225,10 @@
         </div>
         
         <h1 id="MiningQty">0.0000000001</h1> 
-        <button id="startButton">채굴시작</button>
-        <button id="accumulateButton" title="※적립버튼은 2시간마다 클릭 가능합니다.">적립</button>
-        <button id="makeLinkButton">초대링크생성</button>
-        <button id="makePartyButton">파티</button>
+        <button id="startButton"><%= __("text_217") %> <!--채굴시작--></button>
+        <button id="accumulateButton" title="※적립버튼은 2시간마다 클릭 가능합니다."><%= __("text_218") %> <!-- 적립 --></button>
+        <button id="makeLinkButton"><!-- 초대링크생성 --><%= __("text_219") %> </button>
+        <button id="makePartyButton"><%= __("text_220") %> <!-- 파티 --></button>
         <input type="hidden" id="email" value="<%=email%>" />
         <input type="hidden" id="userIdx" value="<%=userIdx%>" />
         <!-- <br /> -->

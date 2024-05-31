@@ -355,7 +355,7 @@ app.get('/main', (req, res) => {
 });
 
 app.get('/login', (req, res) => {
-    res.render('login');
+    res.render('login', { locale: req.getLocale() });
 });
 
 app.post('/login', async (req, res) => {

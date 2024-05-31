@@ -102,30 +102,35 @@
 </head>
 <body>
     <div class="container">
-        <a href="/">HOME</a> / <a href="/ladderList">사다리 게임결과</a> 
+        <a href="/">HOME</a> / <a href="/ladderList"><%= __("text_81") %></a> 
         <br>
-        <h1>사다리 게임-<%=cur_game_id%>차</h1>
-        <div id="timer">남은 시간: <span id="timeRemaining"></span> </div>
+        <h1><%= __("text_82") %><%=cur_game_id%>차</h1>
+        <div id="timer"><%= __("text_83") %> <span id="timeRemaining"></span> </div>
         <% if (gameResult) { %>
             <div class="result-message">
-                <p>게임 결과: <%= gameResult %></p>
+                <p><%= __("text_84") %> <%= gameResult %></p>
                 <% if (userResult > 0) { %>
-                    <p>축하합니다! 당신은 <%= userResult %> CEIK을 얻었습니다.</p>
+                    <p><%= __("text_85") %> <%= userResult %> <%= __("text_86") %><!-- CEIK을 얻었습니다. --></p>
                 <% } else { %>
-                    <p>아쉽습니다. 당신은 베팅에서 패배했습니다.</p>
+                    <p><%= __("text_87") %><!-- 아쉽습니다. 당신은 베팅에서 패배했습니다. --></p>
                 <% } %>
             </div>
         <% } else { %>
             <form id="bettingForm" action="/ladder/bet" method="POST">
                 <input type="hidden" name="userIdx" value="<%= userIdx %>">
                 <div class="betting-section">
-                    전송가능 CEIK 수량 : <span id="accumulatedCount"><%=aah_balance%></span> <br />
-                    <label for="bet_amount">베팅 금액: </label>
+                    <%= __("text_88") %><!-- 전송가능 CEIK 수량 :  -->
+                    <span id="accumulatedCount"><%=aah_balance%></span> <br />
+                    <label for="bet_amount"><%= __("text_89") %><!-- 베팅 금액:  --></label>
                     <input type="number" id="bet_amount" name="bet_amount" min="0.01" step="0.01" required>
                 </div>
                 <div class="betting-section" id="ly_bet_btn">
-                    <button type="button" id="highButton" class="betting-button high">높음</button>
-                    <button type="button" id="lowButton" class="betting-button low">낮음</button>
+                    <button type="button" id="highButton" class="betting-button high">
+                        <%= __("text_90") %><!-- 높음 -->
+                    </button>
+                    <button type="button" id="lowButton" class="betting-button low">
+                        <%= __("text_91") %><!-- 낮음 -->
+                    </button>
                     <input type="hidden" id="bet_choice" name="bet_choice">
                     <input type="hidden" id="game_id" name="game_id" value="<%=cur_game_id%>">
                     <button type="submit" id="betSubmit" class="betting-button" disabled hidden>베팅</button>
@@ -134,31 +139,34 @@
         <% } %>
         <p id="message"></p>
         <div id="game_result" style="display:none;">
-            <p>현재 게임 결과: <%= gameResult %></p>
-            <p>내 베팅 결과: <%= userResult %></p>
-            <p>내 승률: <%= userWinningRate %>%</p>
-            <p>얻은 CEIK: <%= userCEIKGain %></p>
-            <p>원금 대비 증가율: <%= userPercentGain %>%</p>
+            <p><%= __("text_93") %><!-- 현재 게임 결과:  --> <%= gameResult %></p>
+            <p><!-- 내 베팅 결과:  --><%= __("text_94") %> <%= userResult %></p>
+            <p><%= __("text_95") %> <!-- 내 승률:  --> <%= userWinningRate %>%</p>
+            <p><!-- 얻은 CEIK:  --> <%= __("text_96") %> <%= userCEIKGain %></p>
+            <p><!-- 원금 대비 증가율: --><%= __("text_97") %> <%= userPercentGain %>%</p>
         </div>
         <div class="graph-container">
             <div id="highBar" class="bar high-bar" style="width: <%= highPercent.toFixed(2) %>%"></div>
             <div id="lowBar" class="bar low-bar" style="width: <%= lowPercent.toFixed(2) %>%"></div>
             <div class="bar-text">
-                <span>높음: <span id="highBar_txt"><%= highPercent.toFixed(2) %></span>%</span>
-                <span>낮음: <span id="lowBar_txt"><%= lowPercent.toFixed(2) %></span>%</span>
+                <span>
+                    <%= __("text_98") %><!-- 높음:  -->
+                    <span id="highBar_txt"><%= highPercent.toFixed(2) %></span>%</span>
+                <span><%= __("text_99") %><!-- 낮음:  -->
+                    <span id="lowBar_txt"><%= lowPercent.toFixed(2) %></span>%</span>
             </div>
         </div>
         <% if (userBets && userBets.length > 0) { %>
             <div class="bet-history">
-                <h3>나의 베팅 내역 (최근 10행)</h3>
+                <h3><%= __("text_100") %> <!-- 나의 베팅 내역 (최근 10행) --></h3>
                 <table>
                     <tr>
-                        <th>게임번호</th>
-                        <th>베팅 선택</th>
+                        <th><!-- 게임번호 --><%= __("text_101") %></th>
+                        <th><!-- 베팅 선택 --><%= __("text_102") %></th>
                         <th><%= __("text_103") %></th>
-                        <th>결과</th>
-                        <th>승리금액</th>
-                        <th>베팅 시간</th>
+                        <th><%= __("text_71") %><!-- 결과 --></th>
+                        <th><%= __("text_104") %><!-- 승리금액 --></th>
+                        <th><%= __("text_105") %><!-- 베팅 시간 --></th>
                     </tr>
                     <% userBets.forEach(function(bet) { %>
                         <tr <%if(bet.bet_choice==bet.result){%> bgcolor="#f7f9cb" <%} %>>
