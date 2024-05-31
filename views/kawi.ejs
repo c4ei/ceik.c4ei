@@ -24,21 +24,21 @@
     <div class="container">
         <a href="/">HOME</a>
          <!-- / <a href="/ladderList">가위바위보 게임결과</a>  -->
-        <h1 class="text-center">가위바위보 게임</h1>
-        <p class="text-center">안녕하세요, <%= user.email %>님</p>
-        <p class="text-center">현재 잔액: <strong id="balance"><%= user.aah_balance %></strong></p>
+        <h1 class="text-center"><%= __("text_62") %></h1><!-- 가위바위보 게임 -->
+        <p class="text-center"><%= __("text_64") %> <%= user.email %>님</p><!-- 안녕하세요, -->
+        <p class="text-center"><%= __("text_65") %> <strong id="balance"><%= user.aah_balance %></strong></p><!-- 현재 잔액: -->
         
         <form id="gameForm" class="text-center" action="/kawi_play" method="post">
             <div class="form-group">
-                <label for="bet_amount" class="mr-2">베팅 금액</label>
+                <label for="bet_amount" class="mr-2"><%= __("text_66") %></label><!-- 베팅 금액 -->
                 <input type="number" class="form-control d-inline-block w-auto mr-2 mx-auto" name="bet_amount" id="bet_amount" min="0.01" step="0.01" required value="1">
             </div>
             <input type="hidden" name="choice" id="choice">
             <br> <!-- 줄 바꿈 추가 -->
             <div class="text-center">
-                <button type="button" class="btn btn-primary choice-button" onclick="makeChoice('가위')">가위</button>
-                <button type="button" class="btn btn-secondary choice-button" onclick="makeChoice('바위')">바위</button>
-                <button type="button" class="btn btn-success choice-button" onclick="makeChoice('보')">보</button>
+                <button type="button" class="btn btn-primary choice-button" onclick="makeChoice('가위')"><%= __("text_67") %></button><!-- 가위 -->
+                <button type="button" class="btn btn-secondary choice-button" onclick="makeChoice('바위')"><%= __("text_68") %></button><!-- 바위 -->
+                <button type="button" class="btn btn-success choice-button" onclick="makeChoice('보')"><%= __("text_292") %></button><!-- 보 -->
             </div>
         </form>
 

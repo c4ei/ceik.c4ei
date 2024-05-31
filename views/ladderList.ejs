@@ -35,18 +35,18 @@
     </style>
 </head>
 <body>
-    <a href="/">HOME</a> / <a href="/ladder">사다리 게임</a> 
+    <a href="/">HOME</a> / <a href="/ladder"><%= __("text_80") %></a> <!-- 사다리 게임 -->
     <br>
-    <h1>참여한 게임 목록</h1>
+    <h1><%= __("text_108") %> <!-- 참여한 게임 목록 --></h1>
     <table>
         <thead>
             <tr>
-                <th>게임 ID</th>
-                <th>베팅 선택</th>
-                <th>베팅 금액</th>
-                <th>등록일</th>
-                <th>결과</th>
-                <th>승리 금액</th>
+                <th><%= __("text_109") %></th><!-- 게임 ID -->
+                <th><%= __("text_102") %></th><!-- 베팅 선택 -->
+                <th><%= __("text_66") %></th><!-- 베팅 금액 -->
+                <th><%= __("text_110") %></th><!-- 등록일 -->
+                <th><%= __("text_71") %></th><!-- 결과 -->
+                <th><%= __("text_111") %></th><!-- 승리 금액 -->
             </tr>
         </thead>
         <tbody>
@@ -66,7 +66,7 @@
     <!-- 페이징 UI -->
     <div class="pagination">
         <% if (currentPage > 1) { %>
-            <a href="/ladderList?page=<%= currentPage - 1 %>">이전</a>
+            <a href="/ladderList?page=<%= currentPage - 1 %>"><%= __("text_112") %></a><!-- 이전 -->
         <% } %>
 
         <% for (let i = 1; i <= totalPages; i++) { %>
@@ -74,10 +74,8 @@
         <% } %>
 
         <% if (currentPage < totalPages) { %>
-            <a href="/ladderList?page=<%= currentPage + 1 %>">다음</a>
+            <a href="/ladderList?page=<%= currentPage + 1 %>"><%= __("text_113") %></a><!-- 다음 -->
         <% } %>
     </div>
-
-
 </body>
 </html>

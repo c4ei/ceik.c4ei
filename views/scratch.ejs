@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>스크래치 복권</title>
+    <title><%= __("text_242") %><!-- 스크래치 복권 --></title>
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
     <style>
         .scratch-card {
@@ -42,14 +42,14 @@
 <body>
     <div class="container text-center">
         <a href="/">HOME</a>
-        <h1 class="mt-4">스크래치 복권 게임</h1>
+        <h1 class="mt-4"><%= __("text_243") %><!-- 스크래치 복권 게임 --></h1>
         <div class="mb-4">
-            <p>로그인한 사용자: <%= email %></p>
-            <p>현재 잔액: <%= balance %> CEIK - 복권 긁는데 1CEIK 필요</p>
+            <p><%= __("text_244") %> <!-- 로그인한 사용자: --> <%= email %></p>
+            <p><%= __("text_65") %> <!-- 현재 잔액: --> <%= balance %> <%= __("text_245") %></p> <!-- CEIK - 복권 긁는데 1CEIK 필요 -->
         </div>
         <span style="text-align: center;width:100%;">
             <div id="scratchCard" class="scratch-card mt-4">
-                <div id="scratchMessage" class="scratch-message">여기를 긁어주세요!</div>
+                <div id="scratchMessage" class="scratch-message"><%= __("text_246") %></div><!-- 여기를 긁어주세요! -->
                 <canvas id="scratchOverlay" class="scratch-overlay"></canvas>
             </div>
         </span>
@@ -62,7 +62,7 @@
         document.addEventListener('DOMContentLoaded', () => {
             let _cur_balance = "<%= balance %>";
             if( parseFloat(_cur_balance)<1){
-                alert('스크래치 복권 진행에는 1 CEIK 가 필요합니다. 잔액이 부족합니다.');
+                alert('<%= __("text_293") %>'); // 스크래치 복권 진행에는 1 CEIK 가 필요합니다. 잔액이 부족합니다.
                 return;
             }
             const scratchCard = document.getElementById('scratchCard');
@@ -144,7 +144,7 @@
     
     <div class="card mt-4">
         <div class="card-header">
-            당첨 확률 및 금액
+            <%= __("text_248") %><!-- 당첨 확률 및 금액 -->
         </div>
         <div class="card-body">
             <table class="probability-table table table-bordered">

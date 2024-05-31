@@ -90,14 +90,14 @@
             <a href="/">HOME</a> / <a href="/bbs_write">쓰기</a>
         </div>
         <% if (posts.length === 0) { %>
-            <div class="no-content">내용이 없습니다.</div>
+            <div class="no-content"><%= __("text_12") %></div><!-- 내용이 없습니다. -->
         <% } else { %>
             <table>
                 <thead>
                     <tr>
-                        <th>번호</th>
-                        <th>제목</th>
-                        <th>날짜</th>
+                        <th><%= __("text_13") %></th><!-- 번호 -->
+                        <th><%= __("text_14") %></th><!-- 제목 -->
+                        <th><%= __("text_15") %></th><!-- 날짜 -->
                     </tr>
                 </thead>
                 <tbody>
