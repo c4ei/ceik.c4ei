@@ -182,12 +182,13 @@
         <button id="showgoLadderButton" onclick="jsfn_goKawi()"><!-- 가위바위보 --><%= __("text_187") %> </button>
         <button id="showgoLadderButton" onclick="jsfn_goScratch()"><!-- 즉석복권 --><%= __("text_188") %> </button>
         <div id="lyNoShow" style="display: none;">
-            <p>내 Email 주소 : <%=email%></p>
-            <p>내 CEIK 주소 : <br /> <span id="aah_address">
+            <p><%= __("text_189") %> <%=email%></p> <!--- 내 Email 주소 : -->
+            <p><%= __("text_190") %> <!-- 내 CEIK 주소 : --> <br /> <span id="aah_address">
                 <a href ="https://klaytnscope.com/account/<%=aah_address%>?tabId=tokenBalance" target="_blank" style="color: #fff;"><%=aah_address%></a></span></p>
             
             <div class="info">
-                내 지갑 CEIK 예치수량 : <span id="aah_real_balance"><%=aah_real_balance%></span> 
+                <%= __("text_191") %> <!-- 내 지갑 CEIK 예치수량 :  -->
+                <span id="aah_real_balance"><%=aah_real_balance%></span> 
                 <%      if (aah_real_balance>10000000000){ %> <font color="red">Hash+ 250</font> <% } 
                     else if (aah_real_balance>5000000000) { %> <font color="red">Hash+ 150</font> <% }
                     else if (aah_real_balance>2000000000) { %> <font color="red">Hash+ 50</font> <% } 
@@ -196,26 +197,26 @@
                     else if (aah_real_balance>100000000)  { %> <font color="red">Hash+ 2</font> <% } 
                     else if (aah_real_balance>0)   { %> <font color="red">Hash+ 1</font> <% } %>
                 <div class="tooltip" style="font-size: 11px;">
-                    CEIK 예치 100억 초과  Hash파워+250<br>
-                    CEIK 예치 50억 초과   Hash파워+150<br>
-                    CEIK 예치 20억 초과   Hash파워+50<br>
-                    CEIK 예치 10억 초과   Hash파워+20<br>
-                    CEIK 예치 5억 초과    Hash파워+5<br>
-                    CEIK 예치 1억 초과    Hash파워+2<br>
-                    CEIK 예치 0 초과      Hash파워+1<br>
+                    <%= __("text_199") %><!-- CEIK 예치 100억 초과  Hash파워+250 -->
+                    <br><%= __("text_200") %><!-- CEIK 예치 50억 초과   Hash파워+150 -->
+                    <br><%= __("text_201") %><!-- CEIK 예치 20억 초과   Hash파워+50 -->
+                    <br><%= __("text_202") %><!-- CEIK 예치 10억 초과   Hash파워+20 -->
+                    <br><%= __("text_203") %><!-- CEIK 예치 5억 초과    Hash파워+5 -->
+                    <br><%= __("text_204") %><!-- CEIK 예치 1억 초과    Hash파워+2 -->
+                    <br><%= __("text_205") %><!-- CEIK 예치 0 초과      Hash파워+1 -->
+                    <br>
                 </div>
             </div>
             <br />
             <button id="addAddrButton" style="width: 250px;height: 30px;padding: 2px 2px 2px 2px;background-color: chartreuse;color: #ff0000;"
-            ><a href="/add_address">전송용 지갑주소 추가</a></button>
+            ><a href="/add_address"><%= __("text_206") %></a></button><!-- 전송용 지갑주소 추가 -->
             <% if(user_add_addr!=null){ %>
-            <p>추가 CEIK 주소 : <br /> <span id="user_add_addr">
+            <p><%= __("text_207") %> <!-- 추가 CEIK 주소 : --><br /> <span id="user_add_addr">
                 <a href ="https://klaytnscope.com/account/<%=user_add_addr%>?tabId=tokenBalance" target="_blank" style="color: #fff;"><%=user_add_addr%></a></span><br /> 
-                ※추가 CEIK 주소 존재 시 해당 주소로 전송 됩니다.<br />
-                ※If an additional CEIK address exists, it will be sent to that address.
+                <%= __("text_208") %> <!-- ※추가 CEIK 주소 존재 시 해당 주소로 전송 됩니다. -->
             </p>
-            <p >
-                <a href="https://klayswap.com/exchange/swap?output=0x18814b01b5cc76f7043e10fd268cc4364df47da0" target="_blank" style="color: #fff;"><img src="https://s.klayswap.com/img/token/ic-ceik.png" style="width:20px;height:20px" border="0">CEIK구매하러가기(BUY CEIK)</a>
+            <p ><!-- CEIK구매하러가기(BUY CEIK) -->
+                <a href="https://klayswap.com/exchange/swap?output=0x18814b01b5cc76f7043e10fd268cc4364df47da0" target="_blank" style="color: #fff;"><img src="https://s.klayswap.com/img/token/ic-ceik.png" style="width:20px;height:20px" border="0"><%= __("text_210") %></a>
             </p>
             <% } %>
 
@@ -226,7 +227,7 @@
         
         <h1 id="MiningQty">0.0000000001</h1> 
         <button id="startButton"><%= __("text_217") %> <!--채굴시작--></button>
-        <button id="accumulateButton" title="※적립버튼은 2시간마다 클릭 가능합니다."><%= __("text_218") %> <!-- 적립 --></button>
+        <button id="accumulateButton" title='<%= __("text_291") %>'><%= __("text_218") %> <!-- 적립 --></button>
         <button id="makeLinkButton"><!-- 초대링크생성 --><%= __("text_219") %> </button>
         <button id="makePartyButton"><%= __("text_220") %> <!-- 파티 --></button>
         <input type="hidden" id="email" value="<%=email%>" />
@@ -298,7 +299,7 @@
 
     <script>
         function jsfn_useBoost(b_id, b_name){
-            if(!confirm(b_name +" 부스터를 사용 하시겠습니까?")){
+            if(!confirm(b_name +' <%= __("text_290") %>')){ // 부스터를 사용 하시겠습니까?
                 return;
             }
             let b_boost = document.getElementById("b_boost")
@@ -331,9 +332,9 @@
         let _subsc_cnt = "<%=subsc_cnt%>";
         if(_subsc_cnt>0){
             subscribeButton.disabled=true;
-            subscribeButton.textContent="알림ON";
+            subscribeButton.textContent='<%= __("text_286") %>'; // 알림ON
         }else{
-            subscribeButton.textContent="알림OFF";
+            subscribeButton.textContent='<%= __("text_287") %>'; // 알림OFF
         }
         let _serverSpendTime = "<%=ing_sec%>" ; // 
         let _serverPlusTime = _serverSpendTime * <%=Qty_CeikPerSec%>;  // 0.0000000001
@@ -386,11 +387,11 @@
             let _email = document.getElementById("email").value;
             let _userIdx = document.getElementById("userIdx").value;
             if(_aah_balance<1000){
-                alert('최소 전송 가능 수량은 30 CEIK 입니다.\nThe minimum transferable quantity is 30 CEIK.');
+                alert('<%= __("text_288") %>'); // 최소 전송 가능 수량은 30 CEIK 입니다.\nThe minimum transferable quantity is 30 CEIK.
                 return;
             }
             if(_aah_balance>100000){
-                alert('최대 전송 가능 수량은 100000 CEIK 입니다.\nThe maximum transferable quantity is 100000 CEIK.');
+                alert('<%= __("text_289") %>'); // 최대 전송 가능 수량은 100000 CEIK 입니다.\nThe maximum transferable quantity is 100000 CEIK.
                 return;
             }
             let f_mining = document.getElementById("f_mining");

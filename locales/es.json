@@ -231,7 +231,7 @@
 "text_234": "Correo electrónico del usuario:",
 "text_235": "Puntos:",
 "text_236": "Saldo AAH:",
-"text_237": "Aún estamos desarrollando y corrigiendo las partes donde los resultados del servidor no coinciden en la pantalla de la ruleta (__)ㅋ\n (Este texto desaparecerá cuando se solucione el error.)",
+"text_237": "Aún estamos desarrollando y corrigiendo las partes donde los resultados del servidor no coinciden en la pantalla de la ruleta (__)ㅋ (Este texto desaparecerá cuando se solucione el error.)",
 "text_239": "&nbsp;",
 "text_240": "Giro Gratis",
 "text_241": "Girar con Puntos",
@@ -275,8 +275,14 @@
 "text_279": "décimo lugar",
 "text_280": "1 CEIK",
 "text_281": "99%",
-"text_282": "Este correo electrónico ya ha sido registrado.\nPor favor cierre la ventana actual y vuelva a intentarlo.",
+"text_282": "Este correo electrónico ya ha sido registrado. Por favor cierre la ventana actual y vuelva a intentarlo.",
 "text_283": "Por favor ingresa el correo electrónico.",
 "text_284": "Por favor verifique el formato del correo electrónico",
-"text_285": "Ingrese una contraseña de al menos 8 caracteres."
+"text_285": "Por favor ingrese una contraseña de al menos 8 caracteres.",
+"text_286": "Notificación activada",
+"text_287": "Notificación desactivada",
+"text_288": "La cantidad mínima de transferencia es 30 CEIK.",
+"text_289": "La cantidad máxima transferible es 100000 CEIK.",
+"text_290": "¿Quieres usar el refuerzo?",
+"text_291": "※Se puede hacer clic en el botón de acumulación cada 2 horas."
 }

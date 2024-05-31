@@ -231,7 +231,7 @@
 "text_234": "User Email:",
 "text_235": "Points:",
 "text_236": "AAH Balance:",
-"text_237": "We are still developing and are correcting the parts where the server results do not match on the roulette screen (__)ㅋ\n (This text will disappear when the bug is fixed.)",
+"text_237": "We are still developing and are correcting the parts where the server results do not match on the roulette screen (__)ㅋ (This text will disappear when the bug is fixed.)",
 "text_239": "&nbsp;",
 "text_240": "Free Spin",
 "text_241": "Spin with Points",
@@ -275,8 +275,14 @@
 "text_279": "10th place",
 "text_280": "1 CEIK",
 "text_281": "99%",
-"text_282": "This email has already been registered.\nPlease close the current window and try again.",
+"text_282": "This email has already been registered. Please close the current window and try again.",
 "text_283": "Please enter email.",
 "text_284": "Please check email format",
-"text_285": "Please enter a password of at least 8 characters."
+"text_285": "Please enter a password of at least 8 characters.",
+"text_286": "Notification ON",
+"text_287": "Notification OFF",
+"text_288": "Minimum transfer quantity is 30 CEIK.",
+"text_289": "The maximum transferable quantity is 100000 CEIK.",
+"text_290": "Do you want to use booster?",
+"text_291": "※The accumulation button can be clicked every 2 hours."
 }
