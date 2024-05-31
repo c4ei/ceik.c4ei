@@ -5,21 +5,8 @@ const session = require('express-session');
 const shortid = require('shortid');
 const dotenv = require('dotenv');
 const cors = require("cors");
-const i18n = require('./i18n.js.config');
+// const i18n = require('./i18n.js.config');
 // i18n.__('settings_command_menu_sett')
-/*
-const i18n = require('i18n');
-const path = require('path');
-i18n.configure({
-    locales: ['en', 'ko', 'jp', 'ru', 'cn'],
-    directory: path.join(__dirname, 'locales'),
-    defaultLocale: 'ko',
-    cookie: 'lang',
-    queryParameter: 'lang'
-});
-
-app.use(i18n.init);
-*/
 const bodyParser = require('body-parser');
 const webpush = require('web-push');
 const cron = require('node-cron');
@@ -49,6 +36,28 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(cookieParser());
 
 const secretKey = process.env.COOKIE_SECRETKEY;
+//#########################################################################
+// 다국어 처리
+const i18n = require('i18n');
+i18n.configure({
+    locales: ['en', 'ko', 'jp', 'ru', 'cn', 'ar', 'es'],
+    directory: path.join(__dirname, 'locales'),
+    defaultLocale: 'ko',
+    cookie: 'lang',
+    queryParameter: 'lang',
+    autoReload: true, // 파일 변경 시 자동으로 로드
+    updateFiles: false, // 기본 파일 업데이트 방지
+    objectNotation: true // 중첩된 JSON 객체 허용
+});
+app.use(i18n.init);
+
+// 미들웨어를 사용하여 모든 요청에 대해 로케일을 설정
+app.use((req, res, next) => {
+    const locale = req.query.lang || req.cookies.lang || 'ko';
+    res.setLocale(locale);
+    next();
+});
+//#########################################################################
 
 // MySQL 데이터베이스 연결 설정
 const mysql = require("mysql2/promise");
