@@ -7,7 +7,7 @@
     <meta name="author" content="c4ei.net">
     <link rel="apple-touch-icon" href="/favicon.ico" />
     <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico" />
-    <title>초대 링크 페이지</title>
+    <title><%= __("text_54") %><!-- 초대 링크 페이지 --></title>
 <style>
 body {
     font-family: Arial, sans-serif;
@@ -64,12 +64,12 @@ button:hover {
     <div class="container">
         <a href="/">HOME</a> <br>
 
-        <h1>초대 링크 페이지</h1>
-        <p>이 페이지는 초대 링크를 받은 사용자를 위한 페이지입니다.</p>
+        <h1><%= __("text_54") %></h1><!-- 초대 링크 페이지 -->
+        <p><%= __("text_55") %></p><!-- 이 페이지는 초대 링크를 받은 사용자를 위한 페이지입니다. -->
         <div class="invite-link">
-            <p>초대 코드:</p>
+            <p><%= __("text_4") %><!-- 초대 코드: --></p>
             <input type="text" id="inviteLink" value="<%=inviteLink%>" readonly>
-            <button onclick="copyToClipboard()">복사</button>
+            <button onclick="copyToClipboard()"><%= __("text_56") %><!-- 복사 --></button>
         </div>
     </div>
 
@@ -78,7 +78,7 @@ button:hover {
             const inviteCodeInput = document.querySelector('.invite-link input');
             inviteCodeInput.select();
             document.execCommand('copy');
-            alert('초대 코드가 복사되었습니다!');
+            alert('<%= __("text_302") %>'); // 초대 코드가 복사되었습니다!
         }
     </script>
 </body>

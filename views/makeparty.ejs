@@ -7,7 +7,7 @@
     <meta name="author" content="c4ei.net">
     <link rel="apple-touch-icon" href="/favicon.ico" />
     <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico" />
-    <title>PARTY 페이지</title>
+    <title><%= __("text_153") %></title><!-- PARTY 페이지 -->
 <style>
 body {
     font-family: Arial, sans-serif;
@@ -62,11 +62,9 @@ button:hover {
 </head>
 <body>
     <div class="container">
-        <a href="/">HOME</a> /  <a href="/parties">PARTY 가입</a><br>
-
+        <a href="/">HOME</a> /  <a href="/parties"><%= __("text_154") %></a><br><!-- PARTY 가입 -->
         <h1>PARTY 생성 페이지</h1>
         <div class="invite-link">
-            <!-- <p>초대 코드:</p> -->
             <form name="form_party" id="form_party" method="POST">
                 <div class="form-group">
                     <label for="partyName">파티명:</label>

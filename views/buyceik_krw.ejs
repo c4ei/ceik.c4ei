@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CEIK 구매</title>
+    <title><%= __("text_27") %><!-- CEIK 구매 --></title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
         body {
@@ -27,22 +27,22 @@
     <div class="card">
         <div class="card-body">
             <a href="/">HOME</a>
-            <h5 class="card-title text-center">CEIK 구매</h5>
+            <h5 class="card-title text-center"><%= __("text_27") %><!-- CEIK 구매 --></h5>
             <form id="buyForm" action="/buy" method="POST">
                 <div class="mb-3">
-                    <label for="username" class="form-label">입금자 이름</label>
+                    <label for="username" class="form-label"><%= __("text_28") %><!-- 입금자 이름 --></label>
                     <input type="text" class="form-control" id="username" name="username" required>
                 </div>
                 <div class="mb-3">
-                    <label for="amount" class="form-label">입금액 (최소1만원)</label>
+                    <label for="amount" class="form-label"><%= __("text_29") %><!-- 입금액 (최소1만원) --></label>
                     <input type="number" class="form-control" id="amount" name="amount" min="10000" required>
                 </div>
                 <div class="mb-3">
-                    <label for="quantity" class="form-label">구매 수량 (CEIK)</label>
+                    <label for="quantity" class="form-label"><%= __("text_30") %></label><!-- 구매 수량 (CEIK) -->
                     <input type="number" class="form-control" id="quantity" name="quantity" min="1" readonly required>
                 </div>
                 <input type="hidden" id="userIdx" name="userIdx" value="<%= userIdx %>">
-                <button type="submit" class="btn btn-primary w-100">구매 신청</button>
+                <button type="submit" class="btn btn-primary w-100"><%= __("text_31") %></button><!-- 구매 신청 -->
             </form>
         </div>
     </div>
@@ -82,11 +82,11 @@
                 const quantity = parseFloat(quantityInput.value);
 
                 if (!username) {
-                    showToast('입금자 이름을 입력해주세요.');
+                    showToast('<%= __("text_299") %>'); // 입금자 이름을 입력해주세요.
                 } else if (isNaN(amount) || amount < 10000) {
-                    showToast('입금액은 최소 1만원 이상이어야 합니다.');
+                    showToast('<%= __("text_300") %>'); // 입금액은 최소 1만원 이상이어야 합니다.
                 } else if (isNaN(quantity) || quantity < 1) {
-                    showToast('구매 수량을 확인해주세요.');
+                    showToast('<%= __("text_301") %>'); // 구매 수량을 확인해주세요.
                 } else {
                     form.submit();
                 }

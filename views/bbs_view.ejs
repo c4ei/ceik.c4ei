@@ -98,7 +98,7 @@
             <p class="post-date"><%= new Date(post.created_at).toISOString().slice(2, 10).replace(/-/g, ".") %></p>
             <div class="post-content"><%- post.content.replace(/\n/g, '<br>') %></div> <!--- <%- %>는 EJS에서 HTML을 이스케이프하지 않고 그대로 출력 --->
             <div class="comments">
-                <h2>댓글</h2>
+                <h2><%= __("text_18") %></h2><!-- 댓글 -->
                 <div id="commentList">
                     <% comments.forEach(comment => { %>
                         <div class="comment">
@@ -108,8 +108,8 @@
                     <% }); %>
                 </div>
                 <form id="commentForm">
-                    <textarea id="commentContent" name="content" rows="4" placeholder="댓글을 입력하세요"></textarea>
-                    <button type="button" onclick="submitComment(<%= post.id %>)">댓글 작성</button>
+                    <textarea id="commentContent" name="content" rows="4" placeholder="<%= __("text_296") %>"></textarea>
+                    <button type="button" onclick="submitComment(<%= post.id %>)"><%= __("text_19") %></button><!-- 댓글 작성 -->
                 </form>
             </div>
         <% } else { %>
@@ -117,15 +117,14 @@
         <% } %>
         <div class="links">
             <a href="/">HOME</a>
-            <!-- <a href="/bbs_write">글쓰기</a> -->
-            <a href="/bbs_list">글목록</a>
+            <a href="/bbs_list"><%= __("text_22") %></a><!-- 글목록 -->
         </div>
     </div>
     <script>
         async function submitComment(bbsId) {
             const content = document.getElementById('commentContent').value;
             if (!content.trim()) {
-                alert('댓글 내용을 입력하세요.');
+                alert('<%= __("text_297") %>'); // 댓글 내용을 입력하세요.
                 return;
             }
             const response = await fetch('/add_comment', {
@@ -148,7 +147,7 @@
                 commentList.insertBefore(commentElement, commentList.firstChild);
                 document.getElementById('commentContent').value = '';
             } else {
-                alert('댓글 작성에 실패했습니다.');
+                alert('<%= __("text_298") %>'); // 댓글 작성에 실패했습니다.
             }
         }
     </script>

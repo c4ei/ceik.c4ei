@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>게시물 작성</title>
+    <title><%= __("text_23") %></title><!-- 게시물 작성 -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">
     <style>
@@ -85,18 +85,18 @@
             <a href="/">HOME</a>
             <a href="/bbs_list">List</a>
         </div>
-        <h1>게시물 작성</h1>
+        <h1><%= __("text_23") %></h1><!-- 게시물 작성 -->
         <form id="writeForm">
             <div class="form-group">
                 <label for="title"><%= __("text_14") %></label><!-- 제목 -->
                 <input type="text" id="title" name="title" required>
             </div>
             <div class="form-group">
-                <label for="content">내용</label>
+                <label for="content"><%= __("text_25") %></label><!-- 내용 -->
                 <textarea id="content" name="content" required></textarea>
             </div>
             <div class="form-group">
-                <button type="submit">작성하기</button>
+                <button type="submit"><%= __("text_26") %></button><!-- 작성하기 -->
             </div>
         </form>
     </div>
@@ -114,10 +114,10 @@
             });
             const result = await response.json();
             if (result.message === 'Post created successfully.') {
-                alert('게시물이 작성되었습니다.');
+                alert('<%= __("text_294") %>'); // 게시물이 작성되었습니다.
                 window.location.href = '/bbs_list';
             } else {
-                alert('게시물 작성에 실패했습니다.');
+                alert('<%= __("text_295") %>'); // 게시물 작성에 실패했습니다.
             }
         });
     </script>
