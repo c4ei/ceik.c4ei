@@ -1524,6 +1524,124 @@ app.get('/ladderList', async (req, res) => {
 });
 // ######################### ladder end #########################
 
+// ######################### slot start #########################
+app.get('/slot', checkLogin, async (req, res) => {
+    const userIdx = req.session.userIdx;
+    let sql_sel1 = `SELECT userIdx, email, point, aah_balance, last_spin, last_result FROM users WHERE userIdx = ${userIdx}`;
+    const user = await loadDB(sql_sel1);
+    res.render('slot', { user: user[0] });
+});
+
+// 랜덤 결과값 생성 함수
+function generateRandomSlotResult() {
+    const weightedNumbers = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 10, 10, 10, 10]; // 10이 더 자주 나오도록 가중치 부여
+    const result = [];
+    for (let i = 0; i < 5; i++) {
+      const row = [];
+      for (let j = 0; j < 4; j++) {
+        const randomIndex = Math.floor(Math.random() * weightedNumbers.length);
+        row.push(weightedNumbers[randomIndex]);
+      }
+      result.push(row);
+    }
+    return result;
+  }
+
+// 복잡한 점수 계산 함수
+function calculateSlotScore(result) {
+    let score = 0;
+    const points = {
+      1: 5,
+      2: 10,
+      3: 15,
+      4: 20,
+      5: 25,
+      6: 30,
+      7: 35,
+      8: 40,
+      9: 45,
+      10: 50,
+    };
+  
+    // 각 라인에서 동일한 숫자가 나오는 경우 점수 계산
+    for (let i = 0; i < result.length; i++) {
+      const row = result[i];
+      const uniqueNumbers = new Set(row);
+  
+      // 모든 숫자가 동일한 경우
+      if (uniqueNumbers.size === 1) {
+        score += points[row[0]] * 5; // 동일한 숫자가 4개일 때의 점수
+      } else {
+        uniqueNumbers.forEach(number => {
+          const count = row.filter(num => num === number).length;
+          if (count >= 3) {
+            score += points[number] * count; // 동일한 숫자가 3개 이상일 때의 점수
+          }
+        });
+      }
+    }
+  
+    return score;
+  }
+
+// 슬롯 머신 결과 API 엔드포인트
+app.post('/slot/result', checkLogin, async (req, res) => {
+    const userIdx = req.session.userIdx;
+    const betAmount = req.body.betAmount;
+    let userSql = `SELECT point FROM users WHERE userIdx = ${userIdx}`;
+    let user = await loadDB(userSql);
+    let userBalance = user[0].point;
+
+    if (userBalance < betAmount) {
+        return res.status(400).json({ error: 'Insufficient balance' });
+    }
+
+    const result = generateRandomSlotResult();
+    console.log('Generated slot result:', result); // 디버깅을 위한 로그
+    try {
+        const score = calculateSlotScore(result);
+        userBalance -= betAmount;
+
+        // 잭팟 포인트 누적
+        let jackpotSql = `SELECT total_points FROM slot_point_total LIMIT 1`;
+        let jackpotResult = await loadDB(jackpotSql);
+        let totalPoints = jackpotResult.length > 0 ? jackpotResult[0].total_points : 0;
+
+        totalPoints += betAmount;
+
+        // 잭팟 터뜨릴 확률 설정 (예: 1/1000 확률로 잭팟)
+        const jackpotChance = 1000;
+        const randomChance = Math.floor(Math.random() * jackpotChance);
+
+        if (randomChance === 0) {
+            // 잭팟 터뜨림
+            score += totalPoints;
+            totalPoints = 0;
+        }
+
+        userBalance += score;
+
+        // 사용자 잔액 및 마지막 슬롯 결과 업데이트
+        let updateSql = `UPDATE users SET point = ${userBalance}, last_slot_result = '${JSON.stringify(result)}' WHERE userIdx = ${userIdx}`;
+        await saveDB(updateSql);
+
+        // 총 포인트 업데이트
+        if (jackpotResult.length > 0) {
+            let updateJackpotSql = `UPDATE slot_point_total SET total_points = ${totalPoints}`;
+            await saveDB(updateJackpotSql);
+        } else {
+            let insertJackpotSql = `INSERT INTO slot_point_total (total_points) VALUES (${totalPoints})`;
+            await saveDB(insertJackpotSql);
+        }
+
+        res.json({ result, score, balance: userBalance });
+    } catch (error) {
+        console.error('Error calculating slot score:', error);
+        res.status(500).json({ error: 'Error calculating slot score' });
+    }
+});
+
+// ######################### slot end #########################
 
 // ######################### kawi start #########################
 // 로그인 체크 미들웨어

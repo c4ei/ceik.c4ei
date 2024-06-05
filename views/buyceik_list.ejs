@@ -36,8 +36,8 @@
                 <tr>
                     <td><%= log.id %></td>
                     <td><%= log.username %></td>
-                    <td><%= log.amount %></td>
-                    <td><%= log.quantity %></td>
+                    <td><%= parseFloat(log.amount).toFixed(0) %></td>
+                    <td><%= parseFloat(log.quantity).toFixed(0) %></td>
                     <td><%= log.status %></td>
                     <td>
                         <% if (log.status === 'pending') { %>

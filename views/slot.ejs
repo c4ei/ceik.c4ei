@@ -1,0 +1,89 @@
+<!doctype html>
+<html>
+<head>
+  <style>
+    body {
+      margin: 0;
+    }
+
+    #game-container {
+      display: flex;
+      flex-direction: row;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+    .ly_userInfo{position: absolute;top:10px;left:10px; overflow: auto; height: 140px; width:400px;z-index:2;padding-left: 5px;background-color: aliceblue;}
+  </style>
+</head>
+
+<body>
+  <div class="ly_userInfo">
+    <p><%= user.email %> Your balance: <span id="balance"><%= user.point %></span></p>
+    BET : <input type="number" id="betAmount" placeholder="Enter bet amount" value="1" style="width: 60px;" />
+    <div id="result"></div>
+    <p>Your score: <span id="score">0</span></p>
+  </div>
+  <div id="game-container"></div>
+  <div id="result"></div>
+
+  <script src="/js/slot.js"></script>
+  <script src="/js/network.js"></script>
+  <script>
+    async function playGame() {
+      const betAmount = document.getElementById('betAmount').value;
+      if (!betAmount) {
+        alert('Please enter a bet amount.');
+        return;
+      }
+
+      try {
+        const response = await fetch('/slot/result', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ betAmount: parseInt(betAmount) })
+        });
+        const data = await response.json();
+
+        if (data.error) {
+          alert(data.error);
+        } else {
+          const resultDiv = document.getElementById('result');
+          resultDiv.innerHTML = data.result.map(row => row.join(', ')).join('<br>');
+          document.getElementById('balance').innerText = data.balance;
+          document.getElementById('score').innerText = data.score;
+          game.result(data.result); // 게임 결과를 반영
+        }
+      } catch (error) {
+        console.error('Error fetching result:', error);
+      }
+    }
+
+    window.addEventListener('keydown', function(e) {
+      if (e.keyCode == 32) { // Space bar
+        game.play();
+        playGame();
+      }
+    });
+
+    game.on('start', function() {
+      network.send();
+    });
+
+    network.onresponse = function(response) {
+      game.result(response.result);
+    });
+
+    game.on('play', async () => {
+      await playGame();
+    });
+
+    document.getElementById('spinButton').addEventListener('click', function() {
+      game.play();
+      playGame();
+    });
+</script>
+</body>
+</html>
