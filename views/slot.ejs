@@ -1,11 +1,12 @@
 <!doctype html>
 <html>
 <head>
+  <title>CEIK SLOT</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
     body {
       margin: 0;
     }
-
     #game-container {
       display: flex;
       flex-direction: row;
@@ -13,10 +14,29 @@
       align-items: center;
       height: 100vh;
     }
-    .ly_userInfo{position: absolute;top:10px;left:10px; overflow: auto; height: 140px; width:400px;z-index:2;padding-left: 5px;background-color: aliceblue;}
+    .ly_userInfo {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      overflow: auto;
+      height: 140px;
+      width: 400px;
+      z-index: 2;
+      padding-left: 5px;
+      background-color: aliceblue;
+    }
+    #spinButton {
+      display: inline-block;
+      padding: 10px 20px;
+      margin-top: 10px;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
   </style>
 </head>
-
 <body>
   <div class="ly_userInfo">
     <p><%= user.email %> Your balance: <span id="balance"><%= user.point %></span></p>
@@ -24,26 +44,37 @@
     <div id="result"></div>
     <p>Your score: <span id="score">0</span></p>
   </div>
-  <div id="game-container"></div>
+  <div id="game-container" style="background-color: white;"></div>
   <div id="result"></div>
 
   <script src="/js/slot.js"></script>
   <script src="/js/network.js"></script>
   <script>
     async function playGame() {
-      const betAmount = document.getElementById('betAmount').value;
+      const betAmount = parseInt(document.getElementById('betAmount').value);
+      const balance = parseInt(document.getElementById('balance').innerText);
+
       if (!betAmount) {
         alert('Please enter a bet amount.');
         return;
       }
 
+      if (betAmount > balance) {
+        alert('Bet amount exceeds your balance.');
+        return;
+      }
+
       try {
+        // 게임 실행 전에 잔고에서 베팅 금액을 차감합니다.
+        const newBalance = balance - betAmount;
+        document.getElementById('balance').innerText = newBalance; // 잔고 업데이트
+        
         const response = await fetch('/slot/result', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'
           },
-          body: JSON.stringify({ betAmount: parseInt(betAmount) })
+          body: JSON.stringify({ betAmount })
         });
         const data = await response.json();
 
@@ -61,29 +92,41 @@
       }
     }
 
+    var btnPlay = game.sprite('btn-spin');
+    btnPlay.x = 100 + (2 * 140);
+    btnPlay.y = 100 + (3 * 140);
+    btnPlay.action = Slot.ACTION.PLAY;
+
+    btnPlay.interactive = true;
+    btnPlay.buttonMode = true;
+
+    // btnPlay.on('pointerdown', function() {
+    //   const betAmount = parseInt(document.getElementById('betAmount').value);
+    //   const balance = parseInt(document.getElementById('balance').innerText);
+
+    //   if (betAmount > balance) {
+    //     alert('Bet amount exceeds your balance.');
+    //     return;
+    //   }
+
+    //   game.play();
+    //   playGame();
+    // });
+
     window.addEventListener('keydown', function(e) {
       if (e.keyCode == 32) { // Space bar
+        const betAmount = parseInt(document.getElementById('betAmount').value);
+        const balance = parseInt(document.getElementById('balance').innerText);
+
+        if (betAmount > balance) {
+          alert('Bet amount exceeds your balance.');
+          return;
+        }
+
         game.play();
         playGame();
       }
     });
-
-    game.on('start', function() {
-      network.send();
-    });
-
-    network.onresponse = function(response) {
-      game.result(response.result);
-    });
-
-    game.on('play', async () => {
-      await playGame();
-    });
-
-    document.getElementById('spinButton').addEventListener('click', function() {
-      game.play();
-      playGame();
-    });
-</script>
+  </script>
 </body>
 </html>

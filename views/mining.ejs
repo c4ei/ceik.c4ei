@@ -181,6 +181,7 @@
         <button id="showgoLadderButton" onclick="jsfn_goLadder()"><%= __("text_186") %> <!-- 사다리 --></button>
         <button id="showgoLadderButton" onclick="jsfn_goKawi()"><!-- 가위바위보 --><%= __("text_187") %> </button>
         <button id="showgoLadderButton" onclick="jsfn_goScratch()"><!-- 즉석복권 --><%= __("text_188") %> </button>
+        <button id="showgoLadderButton" onclick="jsfn_goSlot()">SLOT🚧</button>
         <div id="lyNoShow" style="display: none;">
             <p><%= __("text_189") %> <%=email%></p> <!--- 내 Email 주소 : -->
             <p><%= __("text_190") %> <!-- 내 CEIK 주소 : --> <br /> <span id="aah_address">
@@ -253,6 +254,9 @@
             }
             function jsfn_goScratch(){
                 document.location.href='/scratch';
+            }
+            function jsfn_goSlot(){
+                document.location.href='/slot';
             }
             function jsfn_goBuyCeik(){
                 document.location.href='/buy';
@@ -383,6 +387,9 @@
         });
 
         sendAAHButton.addEventListener('click', () => {
+            if(!confirm('전송은 취소 할 수 없습니다.\n 추가 계좌를 등록 하지 않으셨으면 내부 지갑으로 이동 됩니다.\n 전송 하시겠습니까?\nTransfers cannot be cancelled.\n If you have not registered an additional account, it will be moved to your internal wallet.\n Would you like to send it?')){
+                return;
+            }
             let _aah_balance  ="<%=aah_balance%>";
             let _email = document.getElementById("email").value;
             let _userIdx = document.getElementById("userIdx").value;

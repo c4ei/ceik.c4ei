@@ -36,7 +36,7 @@ var network = {
 };
 
 var resourcesUrl = './img/';
-var gameWidth = 1500;
+var gameWidth = 640;
 var gameHeight = 640;
 
 var game = new Slot({
@@ -65,26 +65,21 @@ var game = new Slot({
   init: function(game) {
     var background = game.sprite('background');
 
-    // reels 5x3
-    var reelsCount = 5;
-    var reelsPositions = 3;
+    // reels 3x3
+    var reelsCount = 3; 
+    var reelsPositions = 3; 
     var symbolsCount = 10;
     for (var i = 0; i < reelsCount; i++) {
-      // create reel
       var reel = game.reels.add(reelsPositions);
-
-      // position reel
-      reel.x = 381 + (i * 140) + (i * 10);
+      reel.x = 100 + (i * 140) + (i * 10); // l 381 
       reel.y = 118;
 
-      // initial reel values
       for (var k = 0; k < reelsPositions + 1; k++) {
         reel.values.push(parseInt(Math.random() * symbolsCount) + 1);
       }
     }
 
     game.on('start', function() {
-      // set spin values
       for (var i = 0; i < reelsCount; i++) {
         for (var k = 0; k < 100; k++) {
           game.reels.get(i).spinValues.push(parseInt(Math.random() * symbolsCount) + 1);
@@ -98,14 +93,9 @@ var game = new Slot({
     };
 
     var btnPlay = game.sprite('btn-spin');
-    btnPlay.x = 381 + (4.44 * 140);
+    btnPlay.x = 100 + (2 * 140); // l 381 
     btnPlay.y = 100 + (3 * 140);
     btnPlay.action = Slot.ACTION.PLAY;
-
-    // Add event listener for the btn-spin sprite
-    game.on('play', async () => {
-      await playGame();
-    });
 
     window.addEventListener('keydown', function(e) {
       if (e.keyCode == 32) {

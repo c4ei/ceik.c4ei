@@ -1532,57 +1532,94 @@ app.get('/slot', checkLogin, async (req, res) => {
     res.render('slot', { user: user[0] });
 });
 
-// 랜덤 결과값 생성 함수
 function generateRandomSlotResult() {
-    const weightedNumbers = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 10, 10, 10, 10]; // 10이 더 자주 나오도록 가중치 부여
+    const weightedNumbers = [
+        { value: 1, weight: 50 },
+        { value: 2, weight: 30 },
+        { value: 3, weight: 10 },
+        { value: 4, weight: 5 },
+        { value: 5, weight: 3 },
+        { value: 6, weight: 1 },
+        { value: 7, weight: 0.5 },
+        { value: 8, weight: 0.3 },
+        { value: 9, weight: 0.2 },
+        { value: 10, weight: 0.1 }
+    ];
+
     const result = [];
-    for (let i = 0; i < 5; i++) {
-      const row = [];
-      for (let j = 0; j < 4; j++) {
-        const randomIndex = Math.floor(Math.random() * weightedNumbers.length);
-        row.push(weightedNumbers[randomIndex]);
-      }
-      result.push(row);
+    for (let i = 1; i <= 3; i++) { // 행 생성
+        const row = [i]; // 첫 번째 요소는 i로 설정
+        for (let j = 0; j < 3; j++) { // 열, 처음에 1이 이미 들어가 있으므로 3번만 반복
+            const randomValue = getRandomWeightedValue(weightedNumbers);
+            row.push(randomValue);
+        }
+        result.push(row);
     }
     return result;
-  }
+}
 
-// 복잡한 점수 계산 함수
-function calculateSlotScore(result) {
+function getRandomWeightedValue(weightedNumbers) {
+    const totalWeight = weightedNumbers.reduce((sum, num) => sum + num.weight, 0);
+    const random = Math.random() * totalWeight;
+    let weightSum = 0;
+
+    for (const num of weightedNumbers) {
+        weightSum += num.weight;
+        if (random < weightSum) {
+            return num.value;
+        }
+    }
+}
+
+function calculateSlotScore(result, betAmount) {
     let score = 0;
     const points = {
-      1: 5,
-      2: 10,
-      3: 15,
-      4: 20,
-      5: 25,
-      6: 30,
-      7: 35,
-      8: 40,
-      9: 45,
-      10: 50,
+        1: 5,
+        2: 10,
+        3: 15,
+        4: 20,
+        5: 25,
+        6: 30,
+        7: 35,
+        8: 40,
+        9: 45,
+        10: 50,
     };
-  
-    // 각 라인에서 동일한 숫자가 나오는 경우 점수 계산
-    for (let i = 0; i < result.length; i++) {
-      const row = result[i];
-      const uniqueNumbers = new Set(row);
-  
-      // 모든 숫자가 동일한 경우
-      if (uniqueNumbers.size === 1) {
-        score += points[row[0]] * 5; // 동일한 숫자가 4개일 때의 점수
-      } else {
-        uniqueNumbers.forEach(number => {
-          const count = row.filter(num => num === number).length;
-          if (count >= 3) {
-            score += points[number] * count; // 동일한 숫자가 3개 이상일 때의 점수
-          }
+
+    // 베팅 금액에 따른 페이라인 정의
+    const paylines = [
+        [result[0].slice(1)], // Bet 1: 첫 번째 열의 두 번째, 세 번째, 네 번째 숫자
+        [result[0].slice(1), result[1].slice(1)], // Bet 2: 첫 번째, 두 번째 열의 두 번째, 세 번째, 네 번째 숫자
+        [result[0].slice(1), result[1].slice(1), result[2].slice(1)], // Bet 3: 모든 열의 두 번째, 세 번째, 네 번째 숫자
+        [result.map(row => row[1])], // Bet 4: 두 번째 열의 숫자들
+        [result.map(row => row[2])], // Bet 5: 세 번째 열의 숫자들
+        [result.map(row => row[3])], // Bet 6: 네 번째 열의 숫자들
+        [result.map((row, i) => row[i + 1])], // Bet 7: 좌상단에서 우하단으로 대각선
+        [result.map((row, i) => row[3 - i])] // Bet 8: 우상단에서 좌하단으로 대각선
+    ];
+    const linesToCheck = paylines.slice(0, betAmount);
+    linesToCheck.forEach(line => {
+        line.forEach(row => {
+            const uniqueNumbers = new Set(row);
+
+            // 모든 숫자가 동일한 경우
+            if (uniqueNumbers.size === 1) {
+                score += points[row[0]] * row.length;
+            } else {
+                uniqueNumbers.forEach(number => {
+                    const count = row.filter(num => num === number).length;
+                    if (count >= 3) {
+                        score += points[number] * count;
+                    }
+                });
+            }
         });
-      }
-    }
-  
+    });
+    // 높은 베팅 금액에 대한 승수 적용
+    const multiplier = Math.floor((betAmount - 1) / 8) + 1;
+    score *= multiplier;
     return score;
-  }
+}
 
 // 슬롯 머신 결과 API 엔드포인트
 app.post('/slot/result', checkLogin, async (req, res) => {
@@ -1599,7 +1636,7 @@ app.post('/slot/result', checkLogin, async (req, res) => {
     const result = generateRandomSlotResult();
     console.log('Generated slot result:', result); // 디버깅을 위한 로그
     try {
-        const score = calculateSlotScore(result);
+        const score = calculateSlotScore(result, betAmount);
         userBalance -= betAmount;
 
         // 잭팟 포인트 누적
