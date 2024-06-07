@@ -19,7 +19,7 @@
       top: 10px;
       left: 10px;
       overflow: auto;
-      height: 140px;
+      height: 160px;
       width: 400px;
       z-index: 2;
       padding-left: 5px;
@@ -35,19 +35,29 @@
       border-radius: 5px;
       cursor: pointer;
     }
+    .highlight {
+      animation: highlight 2s infinite;
+    }
+    @keyframes highlight {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.5); }
+      100% { transform: scale(1); }
+    }
   </style>
 </head>
 <body>
   <div class="ly_userInfo">
     <p><%= user.email %> Your balance: <span id="balance"><%= user.point %></span></p>
-    BET : <input type="number" id="betAmount" placeholder="Enter bet amount" value="1" style="width: 60px;" />
+    BET : <input type="number" id="betAmount" placeholder="Enter bet amount" value="1" style="width: 60px;" /> <button id="spinButton">Spin</button> <!-- Spin button added -->
     <div id="result"></div>
     <p>Your score: <span id="score">0</span></p>
   </div>
   <div id="game-container" style="background-color: white;"></div>
   <div id="result"></div>
 
+  <script src="/js/pixi.js"></script>
   <script src="/js/slot.js"></script>
+  <script src="/js/slot2.js"></script>
   <script src="/js/network.js"></script>
   <script>
     async function playGame() {
@@ -60,72 +70,45 @@
       }
 
       if (betAmount > balance) {
-        alert('Bet amount exceeds your balance.');
+        alert('Insufficient balance.');
         return;
       }
 
-      try {
-        // 게임 실행 전에 잔고에서 베팅 금액을 차감합니다.
-        const newBalance = balance - betAmount;
-        document.getElementById('balance').innerText = newBalance; // 잔고 업데이트
-        
-        const response = await fetch('/slot/result', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({ betAmount })
-        });
-        const data = await response.json();
-
-        if (data.error) {
-          alert(data.error);
-        } else {
-          const resultDiv = document.getElementById('result');
-          resultDiv.innerHTML = data.result.map(row => row.join(', ')).join('<br>');
-          document.getElementById('balance').innerText = data.balance;
-          document.getElementById('score').innerText = data.score;
-          game.result(data.result); // 게임 결과를 반영
-        }
-      } catch (error) {
-        console.error('Error fetching result:', error);
-      }
+      network.send();
     }
 
-    var btnPlay = game.sprite('btn-spin');
-    btnPlay.x = 100 + (2 * 140);
-    btnPlay.y = 100 + (3 * 140);
-    btnPlay.action = Slot.ACTION.PLAY;
+    function highlightWinningLines(result) {
+      const paylines = [
+        [result[1][1], result[1][2], result[1][3]], // 중앙
+        [result[0][1], result[0][2], result[0][3]], // 상단
+        [result[2][1], result[2][2], result[2][3]], // 하단
+        [result[1][1], result[0][1], result[2][1]], // 좌측
+        [result[1][2], result[0][2], result[2][2]], // 중앙 세로
+        [result[1][3], result[0][3], result[2][3]], // 우측
+        [result[1][1], result[0][2], result[2][3]], // 대각선
+        [result[2][1], result[0][2], result[1][3]]  // 역대각선
+      ];
 
-    btnPlay.interactive = true;
-    btnPlay.buttonMode = true;
-
-    // btnPlay.on('pointerdown', function() {
-    //   const betAmount = parseInt(document.getElementById('betAmount').value);
-    //   const balance = parseInt(document.getElementById('balance').innerText);
-
-    //   if (betAmount > balance) {
-    //     alert('Bet amount exceeds your balance.');
-    //     return;
-    //   }
-
-    //   game.play();
-    //   playGame();
-    // });
-
-    window.addEventListener('keydown', function(e) {
-      if (e.keyCode == 32) { // Space bar
-        const betAmount = parseInt(document.getElementById('betAmount').value);
-        const balance = parseInt(document.getElementById('balance').innerText);
-
-        if (betAmount > balance) {
-          alert('Bet amount exceeds your balance.');
-          return;
+      paylines.forEach(line => {
+        const uniqueNumbers = new Set(line);
+        if (uniqueNumbers.size === 1 || line.some(num => num >= 3)) {
+          line.forEach(num => {
+            const symbol = document.querySelector(`.symbol-${num}`);
+            if (symbol) {
+              symbol.classList.add('highlight');
+            }
+          });
         }
+      });
+    }
 
-        game.play();
-        playGame();
-      }
+    network.onresponse = function(response) {
+      game.result(response.result);
+      highlightWinningLines(response.result); // Highlight winning lines
+    };
+
+    document.addEventListener('DOMContentLoaded', function() {
+      document.getElementById('spinButton').addEventListener('click', playGame);
     });
   </script>
 </body>

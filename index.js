@@ -1532,32 +1532,7 @@ app.get('/slot', checkLogin, async (req, res) => {
     res.render('slot', { user: user[0] });
 });
 
-function generateRandomSlotResult() {
-    const weightedNumbers = [
-        { value: 1, weight: 50 },
-        { value: 2, weight: 30 },
-        { value: 3, weight: 10 },
-        { value: 4, weight: 5 },
-        { value: 5, weight: 3 },
-        { value: 6, weight: 1 },
-        { value: 7, weight: 0.5 },
-        { value: 8, weight: 0.3 },
-        { value: 9, weight: 0.2 },
-        { value: 10, weight: 0.1 }
-    ];
-
-    const result = [];
-    for (let i = 1; i <= 3; i++) { // 행 생성
-        const row = [i]; // 첫 번째 요소는 i로 설정
-        for (let j = 0; j < 3; j++) { // 열, 처음에 1이 이미 들어가 있으므로 3번만 반복
-            const randomValue = getRandomWeightedValue(weightedNumbers);
-            row.push(randomValue);
-        }
-        result.push(row);
-    }
-    return result;
-}
-
+// 가중치 기반 랜덤 값 생성 함수
 function getRandomWeightedValue(weightedNumbers) {
     const totalWeight = weightedNumbers.reduce((sum, num) => sum + num.weight, 0);
     const random = Math.random() * totalWeight;
@@ -1571,54 +1546,76 @@ function getRandomWeightedValue(weightedNumbers) {
     }
 }
 
+// 슬롯 점수 계산 함수
 function calculateSlotScore(result, betAmount) {
     let score = 0;
     const points = {
-        1: 5,
-        2: 10,
-        3: 15,
-        4: 20,
-        5: 25,
-        6: 30,
-        7: 35,
-        8: 40,
-        9: 45,
-        10: 50,
+        1: 2,
+        2: 3,
+        3: 4,
+        4: 5,
+        5: 6,
+        6: 7,
+        7: 8,
+        8: 9,
+        9: 10,
+        10: 50 // 조커
     };
 
-    // 베팅 금액에 따른 페이라인 정의
     const paylines = [
-        [result[0].slice(1)], // Bet 1: 첫 번째 열의 두 번째, 세 번째, 네 번째 숫자
-        [result[0].slice(1), result[1].slice(1)], // Bet 2: 첫 번째, 두 번째 열의 두 번째, 세 번째, 네 번째 숫자
-        [result[0].slice(1), result[1].slice(1), result[2].slice(1)], // Bet 3: 모든 열의 두 번째, 세 번째, 네 번째 숫자
-        [result.map(row => row[1])], // Bet 4: 두 번째 열의 숫자들
-        [result.map(row => row[2])], // Bet 5: 세 번째 열의 숫자들
-        [result.map(row => row[3])], // Bet 6: 네 번째 열의 숫자들
-        [result.map((row, i) => row[i + 1])], // Bet 7: 좌상단에서 우하단으로 대각선
-        [result.map((row, i) => row[3 - i])] // Bet 8: 우상단에서 좌하단으로 대각선
+        [result[1][0], result[1][1], result[1][2]], // 중앙
+        [result[0][0], result[0][1], result[0][2]], // 상단
+        [result[2][0], result[2][1], result[2][2]], // 하단
+        [result[1][0], result[0][0], result[2][0]], // 좌측
+        [result[1][1], result[0][1], result[2][1]], // 중앙 세로
+        [result[1][2], result[0][2], result[2][2]], // 우측
+        [result[1][0], result[0][1], result[2][2]], // 대각선
+        [result[2][0], result[0][1], result[1][2]]  // 역대각선
     ];
-    const linesToCheck = paylines.slice(0, betAmount);
-    linesToCheck.forEach(line => {
-        line.forEach(row => {
-            const uniqueNumbers = new Set(row);
 
-            // 모든 숫자가 동일한 경우
-            if (uniqueNumbers.size === 1) {
-                score += points[row[0]] * row.length;
-            } else {
-                uniqueNumbers.forEach(number => {
-                    const count = row.filter(num => num === number).length;
-                    if (count >= 3) {
-                        score += points[number] * count;
-                    }
-                });
+    paylines.forEach(line => {
+        const uniqueNumbers = new Set(line);
+        if (uniqueNumbers.size === 1) {
+            score += points[line[0]] * 3;
+        } else if (uniqueNumbers.size === 2 && uniqueNumbers.has(10)) {
+            const filteredNumbers = line.filter(num => num !== 10);
+            if (filteredNumbers[0] === filteredNumbers[1]) {
+                score += points[filteredNumbers[0]] * 4;  // 조커 포함
             }
-        });
+        }
     });
-    // 높은 베팅 금액에 대한 승수 적용
+
     const multiplier = Math.floor((betAmount - 1) / 8) + 1;
     score *= multiplier;
     return score;
+}
+
+// 슬롯 결과 생성 함수
+function generateRandomSlotResult() {
+    const weightedNumbers = [
+        { value: 1, weight: 20 },
+        { value: 2, weight: 15 },
+        { value: 3, weight: 10 },
+        { value: 4, weight: 8 },
+        { value: 5, weight: 7 },
+        { value: 6, weight: 6 },
+        { value: 7, weight: 5 },
+        { value: 8, weight: 4 },
+        { value: 9, weight: 3 },
+        { value: 10, weight: 2 } // 조커
+    ];
+
+    const reels = [];
+    for (let i = 0; i < 3; i++) {
+        const reel = [];
+        for (let j = 0; j < 3; j++) {
+            reel.push(getRandomWeightedValue(weightedNumbers));
+        }
+        const dummyValue = Math.floor(Math.random() * 10) + 1; // 1부터 10 사이의 임의의 값
+        reel.unshift(dummyValue); // 앞에 임의 값 추가
+        reels.push(reel);
+    }
+    return reels;
 }
 
 // 슬롯 머신 결과 API 엔드포인트
@@ -1677,7 +1674,6 @@ app.post('/slot/result', checkLogin, async (req, res) => {
         res.status(500).json({ error: 'Error calculating slot score' });
     }
 });
-
 // ######################### slot end #########################
 
 // ######################### kawi start #########################
