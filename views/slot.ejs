@@ -25,7 +25,7 @@
       padding-left: 5px;
       background-color: aliceblue;
     }
-    #spinButton {
+    /* #spinButton {
       display: inline-block;
       padding: 10px 20px;
       margin-top: 10px;
@@ -34,7 +34,7 @@
       border: none;
       border-radius: 5px;
       cursor: pointer;
-    }
+    } */
     .highlight {
       animation: highlight 2s infinite;
     }
@@ -48,7 +48,8 @@
 <body>
   <div class="ly_userInfo">
     <p><%= user.email %> Your balance: <span id="balance"><%= user.point %></span></p>
-    BET : <input type="number" id="betAmount" placeholder="Enter bet amount" value="1" style="width: 60px;" /> <button id="spinButton">Spin</button> <!-- Spin button added -->
+    BET : <input type="number" id="betAmount" placeholder="Enter bet amount" value="1" style="width: 60px;" /> 
+    <!-- <button id="spinButton">Spin</button> -->
     <div id="result"></div>
     <p>Your score: <span id="score">0</span></p>
   </div>
@@ -107,9 +108,9 @@
       highlightWinningLines(response.result); // Highlight winning lines
     };
 
-    document.addEventListener('DOMContentLoaded', function() {
-      document.getElementById('spinButton').addEventListener('click', playGame);
-    });
+    // document.addEventListener('DOMContentLoaded', function() {
+    //   document.getElementById('spinButton').addEventListener('click', playGame);
+    // });
   </script>
 </body>
 </html>

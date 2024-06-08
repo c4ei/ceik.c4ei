@@ -1550,40 +1550,50 @@ function getRandomWeightedValue(weightedNumbers) {
 function calculateSlotScore(result, betAmount) {
     let score = 0;
     const points = {
-        1: 2,
-        2: 3,
-        3: 4,
-        4: 5,
-        5: 6,
-        6: 7,
-        7: 8,
-        8: 9,
-        9: 10,
-        10: 50 // 조커
+        1: { match3: 2, match2: 1 },
+        2: { match3: 3 },
+        3: { match3: 4 },
+        4: { match3: 5 },
+        5: { match3: 6 },
+        6: { match3: 7 },
+        7: { match3: 8 },
+        8: { match3: 9 },
+        9: { match3: 10 },
+        10: { match3: 8, match2: 4 } // 조커
     };
 
     const paylines = [
-        [result[1][0], result[1][1], result[1][2]], // 중앙
-        [result[0][0], result[0][1], result[0][2]], // 상단
-        [result[2][0], result[2][1], result[2][2]], // 하단
-        [result[1][0], result[0][0], result[2][0]], // 좌측
-        [result[1][1], result[0][1], result[2][1]], // 중앙 세로
-        [result[1][2], result[0][2], result[2][2]], // 우측
-        [result[1][0], result[0][1], result[2][2]], // 대각선
-        [result[2][0], result[0][1], result[1][2]]  // 역대각선
+        [result[1][0], result[1][1], result[1][2]], // 1번 베팅 매치: 중앙 수평 (2A, 2B, 2C)
+        [result[0][0], result[0][1], result[0][2]], // 2번 베팅 매치: 상단 수평 (1A, 1B, 1C)
+        [result[2][0], result[2][1], result[2][2]], // 3번 베팅 매치: 하단 수평 (3A, 3B, 3C)
+        [result[1][0], result[0][0], result[2][0]], // 4번 베팅 매치: 좌측 세로 (2A, 1A, 3A)
+        [result[1][1], result[0][1], result[2][1]], // 5번 베팅 매치: 중앙 세로 (2B, 1B, 3B)
+        [result[1][2], result[0][2], result[2][2]], // 6번 베팅 매치: 우측 세로 (2C, 1C, 3C)
+        [result[1][0], result[0][1], result[2][2]], // 7번 베팅 매치: 대각선 (2A, 1B, 3C)
+        [result[2][0], result[0][1], result[1][2]]  // 8번 베팅 매치: 역대각선 (3A, 1B, 2C)
     ];
 
-    paylines.forEach(line => {
+    const activePaylinesCount = Math.min(betAmount, 128);
+
+    for (let i = 0; i < activePaylinesCount && i < paylines.length; i++) {
+        const line = paylines[i];
         const uniqueNumbers = new Set(line);
+
         if (uniqueNumbers.size === 1) {
-            score += points[line[0]] * 3;
+            score += (points[line[0]].match3 || 0) * 3;
         } else if (uniqueNumbers.size === 2 && uniqueNumbers.has(10)) {
             const filteredNumbers = line.filter(num => num !== 10);
             if (filteredNumbers[0] === filteredNumbers[1]) {
-                score += points[filteredNumbers[0]] * 4;  // 조커 포함
+                score += (points[filteredNumbers[0]].match3 || 0) * 4;  // 조커 포함
+            }
+        } else if (uniqueNumbers.size === 2) {
+            if (uniqueNumbers.has(10)) {
+                score += (points[10].match2 || 0) * 2;
+            } else {
+                score += (points[line[0]].match2 || 0) * 2;
             }
         }
-    });
+    }
 
     const multiplier = Math.floor((betAmount - 1) / 8) + 1;
     score *= multiplier;
