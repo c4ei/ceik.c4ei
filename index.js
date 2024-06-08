@@ -1532,7 +1532,6 @@ app.get('/slot', checkLogin, async (req, res) => {
     res.render('slot', { user: user[0] });
 });
 
-// 가중치 기반 랜덤 값 생성 함수
 function getRandomWeightedValue(weightedNumbers) {
     const totalWeight = weightedNumbers.reduce((sum, num) => sum + num.weight, 0);
     const random = Math.random() * totalWeight;
@@ -1546,7 +1545,6 @@ function getRandomWeightedValue(weightedNumbers) {
     }
 }
 
-// 슬롯 점수 계산 함수
 function calculateSlotScore(result, betAmount) {
     let score = 0;
     const points = {
@@ -1562,15 +1560,22 @@ function calculateSlotScore(result, betAmount) {
         10: { match3: 8, match2: 4 } // 조커
     };
 
+    // 보이는 결과를 기준으로 배열을 변환
+    const visibleResult = [
+        [result[0][1], result[1][1], result[2][1]], // 첫 번째 열
+        [result[0][2], result[1][2], result[2][2]], // 두 번째 열
+        [result[0][3], result[1][3], result[2][3]]  // 세 번째 열
+    ];
+
     const paylines = [
-        [result[1][0], result[1][1], result[1][2]], // 1번 베팅 매치: 중앙 수평 (2A, 2B, 2C)
-        [result[0][0], result[0][1], result[0][2]], // 2번 베팅 매치: 상단 수평 (1A, 1B, 1C)
-        [result[2][0], result[2][1], result[2][2]], // 3번 베팅 매치: 하단 수평 (3A, 3B, 3C)
-        [result[1][0], result[0][0], result[2][0]], // 4번 베팅 매치: 좌측 세로 (2A, 1A, 3A)
-        [result[1][1], result[0][1], result[2][1]], // 5번 베팅 매치: 중앙 세로 (2B, 1B, 3B)
-        [result[1][2], result[0][2], result[2][2]], // 6번 베팅 매치: 우측 세로 (2C, 1C, 3C)
-        [result[1][0], result[0][1], result[2][2]], // 7번 베팅 매치: 대각선 (2A, 1B, 3C)
-        [result[2][0], result[0][1], result[1][2]]  // 8번 베팅 매치: 역대각선 (3A, 1B, 2C)
+        [visibleResult[0][1], visibleResult[1][1], visibleResult[2][1]], // 중앙 가로라인
+        [visibleResult[0][0], visibleResult[1][0], visibleResult[2][0]], // 상단 가로라인
+        [visibleResult[0][2], visibleResult[1][2], visibleResult[2][2]], // 하단 가로라인
+        [visibleResult[0][0], visibleResult[0][1], visibleResult[0][2]], // 좌측 세로라인
+        [visibleResult[1][0], visibleResult[1][1], visibleResult[1][2]], // 중앙 세로라인
+        [visibleResult[2][0], visibleResult[2][1], visibleResult[2][2]], // 우측 세로라인
+        [visibleResult[0][0], visibleResult[1][1], visibleResult[2][2]], // 대각선
+        [visibleResult[2][0], visibleResult[1][1], visibleResult[0][2]]  // 역대각선
     ];
 
     const activePaylinesCount = Math.min(betAmount, 128);
@@ -1590,7 +1595,8 @@ function calculateSlotScore(result, betAmount) {
             if (uniqueNumbers.has(10)) {
                 score += (points[10].match2 || 0) * 2;
             } else {
-                score += (points[line[0]].match2 || 0) * 2;
+                const numArray = [...uniqueNumbers];
+                score += (points[numArray[0]].match2 || 0) * 2;
             }
         }
     }
@@ -1600,7 +1606,6 @@ function calculateSlotScore(result, betAmount) {
     return score;
 }
 
-// 슬롯 결과 생성 함수
 function generateRandomSlotResult() {
     const weightedNumbers = [
         { value: 1, weight: 20 },
@@ -1625,10 +1630,23 @@ function generateRandomSlotResult() {
         reel.unshift(dummyValue); // 앞에 임의 값 추가
         reels.push(reel);
     }
+
+    // 보이는 결과를 시각적으로 변환
+    const visibleResult = [
+        [reels[0][1], reels[1][1], reels[2][1]], // 첫 번째 열
+        [reels[0][2], reels[1][2], reels[2][2]], // 두 번째 열
+        [reels[0][3], reels[1][3], reels[2][3]]  // 세 번째 열
+    ];
+
+    console.log('Generated slot result:', reels);
+    // console.log('Visible result:');
+    // visibleResult.forEach(row => console.log(row.join(' ')));
+    console.log(visibleResult.map(row => `[${row.join(' ')}]`).join(', '));
+
     return reels;
 }
 
-// 슬롯 머신 결과 API 엔드포인트
+
 app.post('/slot/result', checkLogin, async (req, res) => {
     const userIdx = req.session.userIdx;
     const betAmount = req.body.betAmount;
@@ -1641,35 +1659,30 @@ app.post('/slot/result', checkLogin, async (req, res) => {
     }
 
     const result = generateRandomSlotResult();
-    console.log('Generated slot result:', result); // 디버깅을 위한 로그
+    // console.log('Generated slot result:', result);
     try {
         const score = calculateSlotScore(result, betAmount);
         userBalance -= betAmount;
 
-        // 잭팟 포인트 누적
         let jackpotSql = `SELECT total_points FROM slot_point_total LIMIT 1`;
         let jackpotResult = await loadDB(jackpotSql);
         let totalPoints = jackpotResult.length > 0 ? jackpotResult[0].total_points : 0;
 
         totalPoints += betAmount;
 
-        // 잭팟 터뜨릴 확률 설정 (예: 1/1000 확률로 잭팟)
         const jackpotChance = 1000;
         const randomChance = Math.floor(Math.random() * jackpotChance);
 
         if (randomChance === 0) {
-            // 잭팟 터뜨림
             score += totalPoints;
             totalPoints = 0;
         }
 
         userBalance += score;
 
-        // 사용자 잔액 및 마지막 슬롯 결과 업데이트
         let updateSql = `UPDATE users SET point = ${userBalance}, last_slot_result = '${JSON.stringify(result)}' WHERE userIdx = ${userIdx}`;
         await saveDB(updateSql);
 
-        // 총 포인트 업데이트
         if (jackpotResult.length > 0) {
             let updateJackpotSql = `UPDATE slot_point_total SET total_points = ${totalPoints}`;
             await saveDB(updateJackpotSql);

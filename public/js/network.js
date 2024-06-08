@@ -1,36 +1,27 @@
-var network = {
-  send: function() {
-    var respond = this.onresponse;
-    setTimeout(async function() {
+const network = {
+  send: async function() {
+      const betAmount = parseInt(document.getElementById('betAmount').value);
       try {
-        const betAmount = document.getElementById('betAmount').value;
-        if (!betAmount) {
-          alert('Please enter a bet amount.');
-          return;
-        }
-
-        const response = await fetch('/slot/result', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({ betAmount: parseInt(betAmount) })
-        });
-        const data = await response.json();
-
-        if (data.error) {
-          alert(data.error);
-        } else {
-          respond({
-            result: data.result
+          const response = await fetch('/slot/result', {
+              method: 'POST',
+              headers: {
+                  'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({ betAmount }),
           });
-          document.getElementById('balance').innerText = data.balance;
-          document.getElementById('score').innerText = data.score;
-        }
+          const data = await response.json();
+          if (data.error) {
+              alert(data.error);
+          } else {
+              document.getElementById('balance').innerText = data.balance;
+              document.getElementById('score').innerText = data.score;
+              this.onresponse(data);
+          }
       } catch (error) {
-        console.error('Error fetching result:', error);
+          console.error('Error:', error);
       }
-    }, Math.random() * 500); // random response delay
   },
-  onresponse: null,
+  onresponse: function(response) {
+      console.log('Response:', response);
+  },
 };
