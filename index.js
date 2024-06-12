@@ -354,6 +354,12 @@ app.get('/main', (req, res) => {
     res.render('main');
 });
 
+app.get('/logout', (req, res) => {
+    req.session.userIdx = "";
+    req.session.email = "";
+    res.redirect('/login');
+});
+
 app.get('/login', (req, res) => {
     res.render('login', { locale: req.getLocale() });
 });

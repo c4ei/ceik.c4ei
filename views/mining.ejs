@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta property="og:title" content="CEIK WEB MINING(마이닝)">
     <meta property="og:url" content="https://ceik.c4ei.net/">
-    <meta property="og:image" content="https://i.ibb.co/Kz8rZ8C/ceik-w-min.png">
+    <meta property="og:image" content="https://i.ibb.co/0Qc6Tcy/ceikmining-V6.jpg">
     <meta property="og:description" content="CEIK  무료 WEB MINING을 시작 하세요.">
     <meta name="description" content="CEIK - All About Healthy Network" />
     <meta name="author" content="c4ei.net">
@@ -58,7 +58,7 @@
 
         button {
             margin-top: 5px;
-            padding: 10px 20px;
+            padding: 5px 10px;
             background-color: #007bff;
             color: #fff;
             border: none;
@@ -177,7 +177,9 @@
         
         <button id="showMoreButton" onclick="jsfn_lyShow()"><!-- 추가정보 --> <%= __("text_183") %> </button>
         <button id="subscribeButton"><!-- PUSH알림 --> <%= __("text_184") %> </button>
-        <button id="showgoRoultteButton" onclick="jsfn_goRoultte()"><%= __("text_185") %> <!-- 룰렛 --></button><br>
+        <button id="showgoRoultteButton" onclick="jsfn_goRoultte()"><%= __("text_185") %> <!-- 룰렛 --></button>
+        <button id="logOutButton" onclick="jsfn_gologOut()">LogOut</button>
+        <br>
         <button id="showgoLadderButton" onclick="jsfn_goLadder()"><%= __("text_186") %> <!-- 사다리 --></button>
         <button id="showgoLadderButton" onclick="jsfn_goKawi()"><!-- 가위바위보 --><%= __("text_187") %> </button>
         <button id="showgoLadderButton" onclick="jsfn_goScratch()"><!-- 즉석복권 --><%= __("text_188") %> </button>
@@ -245,6 +247,9 @@
             }
             function jsfn_goRoultte(){
                 document.location.href='/roulette';
+            }
+            function jsfn_gologOut(){
+                document.location.href='/logout';
             }
             function jsfn_goLadder(){
                 document.location.href='/ladder';
