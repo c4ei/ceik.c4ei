@@ -2102,9 +2102,10 @@ app.post('/approve', async (req, res) => {
         // 사용자 계정 업데이트
         await saveDB(`UPDATE users SET aah_balance = CAST(aah_balance AS DECIMAL(22,8)) + CAST(${quantity} AS DECIMAL(22,8)) WHERE userIdx = '${userIdx}'`);
 
+        const user_ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress || req.socket.remoteAddress || req.connection.socket.remoteAddress;
         // mininglog 테이블에 기록
         const _memo = `KRW 구매 ${quantity}`;
-        await saveDB(`INSERT INTO mininglog (userIdx, aah_balance, regdate, regip, memo) VALUES ('${userIdx}', '${quantity}', NOW(), '${req.ip}', '${_memo}')`);
+        await saveDB(`INSERT INTO mininglog (userIdx, aah_balance, regdate, regip, memo) VALUES ('${userIdx}', '${quantity}', NOW(), '${user_ip}', '${_memo}')`);
 
         // 승인된 로그를 buylog 테이블에서 상태 업데이트
         await saveDB(`UPDATE buylog SET status = 'approved' WHERE id = ${logId}`);
