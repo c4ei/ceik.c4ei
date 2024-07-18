@@ -58,7 +58,7 @@
 
         button {
             margin-top: 5px;
-            padding: 5px 10px;
+            padding: 10px 10px;
             background-color: #007bff;
             color: #fff;
             border: none;
@@ -136,6 +136,7 @@
             }
         }
     </style>
+    <!-- <script src="/socket.io/socket.io.js"></script> -->
 </head>
 <body>
     <div class="container">
@@ -237,7 +238,7 @@
         <input type="hidden" id="userIdx" value="<%=userIdx%>" />
         <!-- <br /> -->
         <div id="clock">2:00:00</div>
-        <br>
+        <!-- <div id="currentUser" style="font-size: 9px;">현재 접속자 수: <span id="activeUsers">0</span></div> -->
         <div id="announcement" style="display:none;">
             <div class="scrolling-text" id="announcementTitle"></div>
         </div>
@@ -547,6 +548,13 @@
         function goToPost(id) {
             window.location.href = `/bbs_view/${id}`;
         }
+    </script>
+    <script>
+        // var socket = io();
+
+        // socket.on('activeUsers', function(count) {
+        //     document.getElementById('activeUsers').textContent = count;
+        // });
     </script>
 <form id="f_mining" name="f_mining" method="post">
     <input type="hidden" id="f_aah_balance" name="f_aah_balance" />

@@ -4,6 +4,7 @@ const bcrypt = require('bcrypt');
 const session = require('express-session');
 const shortid = require('shortid');
 const dotenv = require('dotenv');
+dotenv.config();
 const cors = require("cors");
 // const i18n = require('./i18n.js.config');
 // i18n.__('settings_command_menu_sett')
@@ -14,8 +15,23 @@ const jwt = require('jsonwebtoken');
 const cookieParser = require('cookie-parser');
 
 const app = express();
+// const socketIo = require('socket.io');
+// const http = require('http');  // http 모듈을 불러옵니다.
+// const server = http.createServer(app);
+// const io = socketIo(server);
 
-dotenv.config();
+// let activeUsers = 0;
+
+// io.on('connection', (socket) => {
+//     activeUsers++;
+//     io.emit('activeUsers', activeUsers); // 모든 클라이언트에 현재 사용자 수를 방송
+
+//     socket.on('disconnect', () => {
+//         activeUsers--;
+//         io.emit('activeUsers', activeUsers); // 모든 클라이언트에 업데이트된 사용자 수를 방송
+//     });
+// });
+
 app.use(express.json());
 app.use(cors());
 app.options("*", cors());
@@ -34,6 +50,7 @@ app.use(express.static('public'));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(cookieParser());
+
 
 const secretKey = process.env.COOKIE_SECRETKEY;
 //#########################################################################
@@ -57,7 +74,15 @@ app.use((req, res, next) => {
     res.setLocale(locale);
     next();
 });
+ 
 //#########################################################################
+// 에러 핸들링 미들웨어
+app.use((err, req, res, next) => {
+    console.error('에러 발생:', err.message);
+    console.error('요청 URL:', req.originalUrl); // 요청 URL 로깅
+  
+    res.status(500).send('서버 에러');
+});
 
 // MySQL 데이터베이스 연결 설정
 const mysql = require("mysql2/promise");
