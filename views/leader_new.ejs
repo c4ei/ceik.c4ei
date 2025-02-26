@@ -1,17 +1,17 @@
 <!DOCTYPE html>
-<html lang="ko">
+<html>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta property="og:title" content="CEIK WEB MINING(마이닝)">
     <meta property="og:url" content="https://ceik.c4ei.net/">
     <meta property="og:image" content="https://i.ibb.co/0Qc6Tcy/ceikmining-V6.jpg">
-    <meta property="og:description" content="CEIK 무료 WEB MINING을 시작 하세요.">
-    <meta name="description" content="CEIK - c4ei.net 4 klay">
+    <meta property="og:description" content="CEIK  무료 WEB MINING을 시작 하세요.">
+    <meta name="description" content="CEIK - c4ei.net 4 klay" />
     <meta name="author" content="c4ei.net">
-    <link rel="apple-touch-icon" href="/favicon.ico">
-    <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico">
-    <title>사다리 게임</title>
+    <link rel="apple-touch-icon" href="/favicon.ico" />
+    <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico" />
+    <title><%= __("text_80") %></title><!-- 사다리 게임 -->
     <style>
         .container {
             width: 60%;
@@ -90,101 +90,99 @@
             margin-top: 20px;
             font-size: 18px;
         }
-        #ladder-game {
-            position: relative;
-            width: 100%;
-            height: 300px;
-            background-image: url('path/to/your/ladder-game-image.jpg'); /* 사다리 게임 이미지 경로 */
-            background-size: cover;
-            background-position: center;
-            margin: 20px 0;
+        @media (min-width: 600px) {
+            .betting-buttons {
+                flex-direction: row;
+                width: auto;
+            }
+            .betting-button {
+                margin: 10px;
+            }
         }
-        .player {
-            position: absolute;
-            width: 30px;
-            height: 30px;
-            background-color: yellow; /* 플레이어 아이콘 색상 */
-            border-radius: 50%;
-            text-align: center;
-            line-height: 30px;
-            font-weight: bold;
+        #graph-container {
+            width: 100%;
+            display: flex;
+            justify-content: space-around;
+        }
+        #high-bar, #low-bar {
+            width: 45%;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <a href="/">HOME</a> / <a href="/ladderList">게임 리스트</a>
+        <a href="/">HOME</a> / <a href="/ladderList"><%= __("text_81") %></a> 
         <br>
-        <h1>사다리 게임 <%= cur_game_id %>차</h1>
-        <div id="timer">남은 시간: <span id="timeRemaining"></span></div>
+        <h1><%= __("text_82") %><%=cur_game_id%>차</h1>
+        <div id="timer"><%= __("text_83") %> <span id="timeRemaining"></span> </div>
         <% if (gameResult) { %>
             <div class="result-message">
-                <p>게임 결과: <%= gameResult %></p>
+                <p><%= __("text_84") %> <%= gameResult %></p>
                 <% if (userResult > 0) { %>
-                    <p>획득 CEIK: <%= userResult %> CEIK</p>
+                    <p><%= __("text_85") %> <%= userResult %> <%= __("text_86") %><!-- CEIK을 얻었습니다. --></p>
                 <% } else { %>
-                    <p>아쉽습니다. 당신은 베팅에서 패배했습니다.</p>
+                    <p><%= __("text_87") %><!-- 아쉽습니다. 당신은 베팅에서 패배했습니다. --></p>
                 <% } %>
             </div>
         <% } else { %>
             <form id="bettingForm" action="/ladder/bet" method="POST">
                 <input type="hidden" name="userIdx" value="<%= userIdx %>">
                 <div class="betting-section">
-                    전송가능 CEIK 수량: <span id="accumulatedCount"><%= aah_balance %></span><br>
-                    <label for="bet_amount">베팅 금액:</label>
+                    <%= __("text_88") %><!-- 전송가능 CEIK 수량 :  -->
+                    <span id="accumulatedCount"><%=aah_balance%></span> <br />
+                    <label for="bet_amount"><%= __("text_89") %><!-- 베팅 금액:  --></label>
                     <input type="number" id="bet_amount" name="bet_amount" min="0.01" step="0.01" required value="1">
                 </div>
                 <div class="betting-section" id="ly_bet_btn">
-                    <button type="button" id="highButton" class="betting-button high">높음</button>
-                    <button type="button" id="lowButton" class="betting-button low">낮음</button>
+                    <button type="button" id="highButton" class="betting-button high">
+                        <%= __("text_90") %><!-- 높음 -->
+                    </button>
+                    <button type="button" id="lowButton" class="betting-button low">
+                        <%= __("text_91") %><!-- 낮음 -->
+                    </button>
                     <input type="hidden" id="bet_choice" name="bet_choice">
-                    <input type="hidden" id="game_id" name="game_id" value="<%= cur_game_id %>">
+                    <input type="hidden" id="game_id" name="game_id" value="<%=cur_game_id%>">
                     <button type="submit" id="betSubmit" class="betting-button" disabled hidden>베팅</button>
                 </div>
             </form>
         <% } %>
         <p id="message"></p>
-        <div id="ladder-game">
-            <div class="player" id="player1">1</div>
-            <div class="player" id="player2">2</div>
-            <div class="player" id="player3">3</div>
-            <div class="player" id="player4">4</div>
-            <div class="player" id="player5">5</div>
-        </div>
         <div id="game_result" style="display:none;">
-            <p>현재 게임 결과: <%= gameResult %></p>
-            <p>내 베팅 결과: <%= userResult %></p>
-            <p>내 승률: <%= userWinningRate %>%</p>
-            <p>획득 CEIK: <%= userCEIKGain %></p>
-            <p>원금 대비 증가율: <%= userPercentGain %>%</p>
+            <p><%= __("text_93") %><!-- 현재 게임 결과:  --> <%= gameResult %></p>
+            <p><!-- 내 베팅 결과:  --><%= __("text_94") %> <%= userResult %></p>
+            <p><%= __("text_95") %> <!-- 내 승률:  --> <%= userWinningRate %>%</p>
+            <p><!-- 얻은 CEIK:  --> <%= __("text_96") %> <%= userCEIKGain %></p>
+            <p><!-- 원금 대비 증가율: --><%= __("text_97") %> <%= userPercentGain %>%</p>
         </div>
         <div class="graph-container">
             <div id="highBar" class="bar high-bar" style="width: <%= highPercent.toFixed(2) %>%"></div>
             <div id="lowBar" class="bar low-bar" style="width: <%= lowPercent.toFixed(2) %>%"></div>
             <div class="bar-text">
-                <span>높음: <span id="highBar_txt"><%= highPercent.toFixed(2) %></span>%</span>
-                <span>낮음: <span id="lowBar_txt"><%= lowPercent.toFixed(2) %></span>%</span>
+                <span>
+                    <%= __("text_98") %><!-- 높음:  -->
+                    <span id="highBar_txt"><%= highPercent.toFixed(2) %></span>%</span>
+                <span><%= __("text_99") %><!-- 낮음:  -->
+                    <span id="lowBar_txt"><%= lowPercent.toFixed(2) %></span>%</span>
             </div>
         </div>
         <% if (userBets && userBets.length > 0) { %>
             <div class="bet-history">
-                <h3>나의 베팅 내역 (최근 10행)</h3>
+                <h3><%= __("text_100") %> <!-- 나의 베팅 내역 (최근 10행) --></h3>
                 <table>
                     <tr>
-                        <th>게임번호</th>
-                        <th>베팅 선택</th>
-                        <th>베팅 금액</th>
-                        <th>결과</th>
-                        <th>승리 금액</th>
-                        <th>베팅 시간</th>
+                        <th><!-- 게임번호 --><%= __("text_101") %></th>
+                        <th><!-- 베팅 선택 --><%= __("text_102") %></th>
+                        <th><%= __("text_103") %></th>
+                        <th><%= __("text_71") %><!-- 결과 --></th>
+                        <th><%= __("text_104") %><!-- 승리금액 --></th>
+                        <th><%= __("text_105") %><!-- 베팅 시간 --></th>
                     </tr>
                     <% userBets.forEach(function(bet) { %>
-                        <tr <% if (bet.bet_choice == bet.result) { %> bgcolor="#f7f9cb" <% } %>>
+                        <tr <%if(bet.bet_choice==bet.result){%> bgcolor="#f7f9cb" <%} %>>
                             <td>
-                                <% if (bet.result == null && bet.game_id != cur_game_id) { %>
-                                    <a href="/ladderend/<%= bet.game_id %>"><%= bet.game_id %></a>
+                                <% if (bet.result==null && bet.game_id!=cur_game_id ){  %><a href="/ladderend/<%= bet.game_id %>"><%= bet.game_id %></a>
                                 <% } else { %>
-                                    <%= bet.game_id %>
+                                <%= bet.game_id %>
                                 <% } %>
                             </td>
                             <td><%= bet.bet_choice %></td>
@@ -222,16 +220,6 @@
             const timerElement = document.getElementById('timeRemaining');
             updateTimer(timerElement, endTime);
             setInterval(() => updateTimer(timerElement, endTime), 1000);
-
-            // Initialize player positions
-            const players = [
-                { id: 'player1', x: 10, y: 50 },
-                { id: 'player2', x: 30, y: 50 },
-                { id: 'player3', x: 50, y: 50 },
-                { id: 'player4', x: 70, y: 50 },
-                { id: 'player5', x: 90, y: 50 }
-            ];
-            updatePlayerPositions(players);
         });
 
         function handleBetChoice(choice, highButton, lowButton, betChoiceInput, betSubmit, message) {
@@ -243,7 +231,7 @@
                 return;
             }
             if (_ceik_qty < _bet_amount) {
-                alert('베팅할 수 있는 CEIK가 적습니다.');
+                alert('베팅할 수있는 CEIK 가 적습니다.');
                 return;
             }
             betChoiceInput.value = choice;
@@ -252,7 +240,7 @@
             highButton.disabled = true;
             lowButton.disabled = true;
             betSubmit.disabled = false;
-            message.textContent = '선택 후 변경할 수 없습니다.';
+            message.textContent = '선택 후 변경 할 수 없습니다.';
         }
 
         function updateTimer(timerElement, endTime) {
@@ -262,29 +250,61 @@
                 const minutes = Math.floor(timeRemaining / 1000 / 60);
                 const seconds = Math.floor((timeRemaining / 1000) % 60);
                 timerElement.textContent = `${minutes}분 ${seconds}초`;
-                if (document.getElementById('message').innerText !== '게임 중입니다. 베팅이 가능합니다.') {
-                    document.getElementById('message').innerText = '게임 중입니다. 베팅이 가능합니다.';
+                if(document.getElementById('message').innerText !='게임 중 입니다. 베팅이 가능 합니다.'){
+                    document.getElementById('message').innerText = '게임 중 입니다. 베팅이 가능 합니다.';
                     document.getElementById('ly_bet_btn').style.display = 'block';
                 }
             } else {
                 timerElement.textContent = '게임 종료';
-                if (document.getElementById('message').innerText !== '다음 게임 준비 중입니다.') {
+                if(document.getElementById('message').innerText != '다음 게임 준비 중입니다.'){
                     document.getElementById('message').innerText = '다음 게임 준비 중입니다.';
                     document.getElementById('ly_bet_btn').style.display = 'none';
                 }
-                setTimeout(() => { location.href = '/ladderend/<%= cur_game_id %>'; }, 3000); // 3초 후
+                setTimeout(() => { location.href='/ladderend/<%=cur_game_id%>'; }, 3*1000); // 3 Sec
             }
         }
-
-        function updatePlayerPositions(players) {
-            players.forEach(player => {
-                const playerElement = document.getElementById(player.id);
-                if (playerElement) {
-                    playerElement.style.left = `${player.x}%`;
-                    playerElement.style.top = `${player.y}%`;
-                }
-            });
-        }
     </script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const gameId = '<%=cur_game_id%>';
+
+            function fetchGraphData() {
+                fetch(`/api/graph-data/${gameId}`)
+                    .then(response => response.json())
+                    .then(data => updateGraph(data))
+                    .catch(error => console.error('Error fetching graph data:', error));
+            }
+
+            function updateGraph(data) {
+                const highBar = document.getElementById('highBar');
+                const lowBar = document.getElementById('lowBar');
+                const highBar_txt = document.getElementById('highBar_txt');
+                const lowBar_txt = document.getElementById('lowBar_txt');
+                lowBar
+                if (highBar && lowBar) {
+                    highBar.style.width = data.high + '%';
+                    lowBar.style.width = data.low + '%';
+                    highBar_txt.innerText = data.high.toFixed(2);
+                    lowBar_txt.innerText = data.low.toFixed(2);
+                } else {
+                    console.error('Graph elements not found');
+                }
+            }
+            // 1초마다 fetchGraphData 함수 호출
+            setInterval(fetchGraphData, 1000);
+        });
+        document.getElementById('highButton').addEventListener('click', function() {
+            setTimeout(function() {
+                document.getElementById('betSubmit').click();
+            }, 500); // 0.5초 딜레이
+        });
+
+        document.getElementById('lowButton').addEventListener('click', function() {
+            setTimeout(function() {
+                document.getElementById('betSubmit').click();
+            }, 500); // 0.5초 딜레이
+        });
+    </script>
+   
 </body>
 </html>

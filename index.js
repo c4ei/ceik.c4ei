@@ -15,6 +15,39 @@ const jwt = require('jsonwebtoken');
 const cookieParser = require('cookie-parser');
 
 const app = express();
+// ######## IP 주소 차단 start ######## yarn add express-ipfilter
+app.set('trust proxy', true); // trust proxy 설정은 최상단에 위치
+const { IpFilter, IpDeniedError } = require('express-ipfilter');
+// 차단, 허용할 특정 IP 목록  // var ips = [['192.168.0.10', '192.168.0.20'], '192.168.0.100']; // 범위 사용 예시
+const ips = ['80.66.83.210','103.194.185.58','194.38.23.18','103.212.98.106','45.148.10.80','196.251.73.83','122.136.188.132']; 
+app.use(IpFilter(ips, {
+  log: false,
+  detectIp: (req) => req.ip // trust proxy 설정 후 req.ip 사용 가능
+})); // IP 필터 적용
+
+// 에러 핸들러
+app.use((err, req, res, _next) => {
+  if (err instanceof IpDeniedError) {
+    res.status(401).send('Access Denied');
+  } else {
+    res.status(err.status || 500).end();
+  }
+});
+// ######## 1초에 3번 이상 같은 IP에서 오는 요청 차단 start ######## yarn add express-rate-limit
+const rateLimit = require('express-rate-limit');
+const limiter = rateLimit({
+  windowMs: 1000, // 1초
+  max: 3, // 최대 3회
+  message: 'Too many requests, please try again later.',
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req) => req.ip // trust proxy 설정 후 req.ip 사용 가능
+});
+
+app.use(limiter); // app.use('/order_cnt', limiter); // 특정 라우트에 적용
+//    ######## 1초에 5번 이상 같은 IP에서 오는 요청 차단 end ########
+// ######## IP 주소 차단 end ######## 
+
 // const socketIo = require('socket.io');
 // const http = require('http');  // http 모듈을 불러옵니다.
 // const server = http.createServer(app);
@@ -1254,14 +1287,14 @@ async function jsfn_create_lad_game(){
 jsfn_create_lad_game(); // Server start!!!!
 
 // 6분마다 lad_game
-cron.schedule('*/6 * * * *', async () => {
-    console.log('6분마다 lad_game create - '+getCurTimestamp());
-    try {
-        jsfn_create_lad_game();
-    } catch (error) {
-        console.error('jsfn_create_lad_game Error querying database:', error);
-    }
-});
+// cron.schedule('*/6 * * * *', async () => {
+//     console.log('6분마다 lad_game create - '+getCurTimestamp());
+//     try {
+//         jsfn_create_lad_game();
+//     } catch (error) {
+//         console.error('jsfn_create_lad_game Error querying database:', error);
+//     }
+// });
 
 // 데이터를 반환하는 엔드포인트 추가
 app.get('/api/graph-data/:game_id', async (req, res) => {
@@ -2211,7 +2244,7 @@ const sendNotification = async (subscription, payload) => {
 
 // 5분마다 알림 보내기
 cron.schedule('*/5 * * * *', async () => {
-    console.log('Checking for records older than 2 hours-5분마다 알림 보내기');
+    // console.log('2 hours-5분마다 알림 보내기-CEIK 적립이 가능해요');
 
     const query = ` SELECT userIdx, midx 
     FROM mininglog 
